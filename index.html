@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🌍 आसी वर्ल्ड - AI संग पूरी दुनिया</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            overflow: hidden;
+            background: #0a0a1a;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+        canvas {
+            display: block;
+        }
+
+        /* ----- Chat Box (Leader से बात) ----- */
+        #chat-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(600px, 92%);
+            background: rgba(10, 10, 30, 0.85);
+            backdrop-filter: blur(16px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 150, 255, 0.08);
+            padding: 14px 18px 18px;
+            z-index: 100;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        #chat-container.minimized {
+            transform: translateX(-50%) translateY(calc(100% - 60px));
+            opacity: 0.7;
+        }
+        #chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #fff;
+            font-weight: 600;
+            font-size: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            cursor: pointer;
+            user-select: none;
+        }
+        #chat-header .badge {
+            background: linear-gradient(135deg, #00c6ff, #0072ff);
+            padding: 2px 14px;
+            border-radius: 40px;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            color: #fff;
+        }
+        #chat-header .toggle-btn {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0 6px;
+        }
+        #chat-messages {
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 10px 4px 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            scroll-behavior: smooth;
+        }
+        #chat-messages::-webkit-scrollbar {
+            width: 4px;
+        }
+        #chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        #chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+        .msg {
+            padding: 8px 14px;
+            border-radius: 18px;
+            max-width: 85%;
+            font-size: 14px;
+            line-height: 1.5;
+            animation: fadeIn 0.25s ease;
+        }
+        .msg.user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #0072ff, #00c6ff);
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+        .msg.leader {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.08);
+            color: #e0e8ff;
+            border-bottom-left-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .msg.leader .name {
+            font-weight: 700;
+            color: #ffd700;
+            font-size: 12px;
+            display: block;
+            margin-bottom: 2px;
+        }
+        .msg.leader code {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #ffdd99;
+            display: inline-block;
+            white-space: pre-wrap;
+        }
+        .msg .time {
+            font-size: 10px;
+            opacity: 0.5;
+            margin-left: 10px;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #chat-input-area {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            align-items: center;
+        }
+        #chat-input-area input {
+            flex: 1;
+            padding: 10px 16px;
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            transition: border 0.2s;
+        }
+        #chat-input-area input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+        #chat-input-area input:focus {
+            border-color: rgba(0, 150, 255, 0.5);
+        }
+        #chat-input-area button {
+            padding: 10px 22px;
+            border-radius: 40px;
+            border: none;
+            background: linear-gradient(135deg, #00c6ff, #0072ff);
+            color: #fff;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.2s;
+            white-space: nowrap;
+        }
+        #chat-input-area button:hover {
+            transform: scale(1.03);
+            box-shadow: 0 4px 20px rgba(0, 114, 255, 0.4);
+        }
+        #chat-input-area button:active {
+            transform: scale(0.96);
+        }
+
+        /* ----- HUD info ----- */
+        #hud {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 13px;
+            letter-spacing: 1px;
+            text-align: center;
+            pointer-events: none;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(6px);
+            padding: 8px 24px;
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            font-weight: 300;
+        }
+        #hud span {
+            color: #ffd700;
+            font-weight: 600;
+        }
+
+        /* ----- Loading / status ----- */
+        #loading {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0a0a1a;
+            color: #fff;
+            font-size: 20px;
+            z-index: 999;
+            flex-direction: column;
+            gap: 16px;
+            transition: opacity 0.8s ease;
+        }
+        #loading.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #loading .spinner {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.05);
+            border-top-color: #00c6ff;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* responsive */
+        @media (max-width: 600px) {
+            #chat-container {
+                width: 96%;
+                padding: 10px 12px 14px;
+                bottom: 10px;
+            }
+            #chat-messages {
+                max-height: 140px;
+            }
+            .msg {
+                font-size: 13px;
+                padding: 6px 12px;
+            }
+            #chat-input-area input {
+                font-size: 13px;
+                padding: 8px 14px;
+            }
+            #chat-input-area button {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
+            #hud {
+                font-size: 11px;
+                padding: 4px 16px;
+                top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Loading -->
+    <div id="loading">
+        <div class="spinner"></div>
+        <div>🌍 आसी वर्ल्ड बन रहा है...</div>
+    </div>
+
+    <!-- HUD -->
+    <div id="hud">🌏 <span>आसी वर्ल्ड</span> · AI संग पूरी दुनिया · C, C++, Python, Java</div>
+
+    <!-- Chat Container -->
+    <div id="chat-container">
+        <div id="chat-header" onclick="toggleChat()">
+            <span>👑 <span style="color:#ffd700;">Leader</span> (सभी भाषाएँ जानता है)</span>
+            <span class="badge">● ऑनलाइन</span>
+            <button class="toggle-btn" id="toggleBtn">−</button>
+        </div>
+        <div id="chat-messages">
+            <div class="msg leader">
+                <span class="name">👑 Leader</span>
+                नमस्ते! मैं इस दुनिया का Leader हूँ। मुझे C, C++, Python, Java – सभी भाषाएँ आती हैं। आप कोई भी प्रोग्रामिंग सवाल पूछ सकते हैं।
+                <span class="time">अभी</span>
+            </div>
+        </div>
+        <div id="chat-input-area">
+            <input type="text" id="chatInput" placeholder="कोई भी प्रोग्रामिंग सवाल पूछें..." autocomplete="off" />
+            <button id="sendBtn">भेजें</button>
+        </div>
+    </div>
+
+    <!-- Three.js -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.126.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.126.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // ----- Setup Scene -----
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a2a4a);
+        scene.fog = new THREE.Fog(0x1a2a4a, 80, 200);
+
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 500);
+        camera.position.set(40, 35, 55);
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        document.body.prepend(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxPolarAngle = Math.PI / 2.3;
+        controls.minDistance = 15;
+        controls.maxDistance = 120;
+        controls.target.set(0, 2, 0);
+
+        // ----- Lights -----
+        const ambient = new THREE.AmbientLight(0x446688, 0.5);
+        scene.add(ambient);
+
+        const sun = new THREE.DirectionalLight(0xffeedd, 1.6);
+        sun.position.set(40, 50, 30);
+        sun.castShadow = true;
+        sun.shadow.mapSize.width = 2048;
+        sun.shadow.mapSize.height = 2048;
+        sun.shadow.camera.near = 0.5;
+        sun.shadow.camera.far = 120;
+        sun.shadow.camera.left = -60;
+        sun.shadow.camera.right = 60;
+        sun.shadow.camera.top = 60;
+        sun.shadow.camera.bottom = -60;
+        scene.add(sun);
+
+        const fill = new THREE.DirectionalLight(0x88aaff, 0.4);
+        fill.position.set(-30, 20, -30);
+        scene.add(fill);
+
+        const hemi = new THREE.HemisphereLight(0x88ccff, 0x443322, 0.6);
+        scene.add(hemi);
+
+        // ----- Ground -----
+        const groundGeo = new THREE.PlaneGeometry(140, 140, 80, 80);
+        const positions = groundGeo.attributes.position.array;
+        for (let i = 0; i < positions.length; i += 3) {
+            const x = positions[i];
+            const z = positions[i + 1];
+            // hills
+            let h = 0;
+            h += 2.5 * Math.exp(-((x - 10) ** 2 + (z - 8) ** 2) / 80);
+            h += 3.0 * Math.exp(-((x + 12) ** 2 + (z - 15) ** 2) / 100);
+            h += 2.0 * Math.exp(-((x + 5) ** 2 + (z + 18) ** 2) / 70);
+            h += 1.8 * Math.exp(-((x - 18) ** 2 + (z + 12) ** 2) / 90);
+            h += 2.2 * Math.exp(-((x + 20) ** 2 + (z + 5) ** 2) / 110);
+            // gentle roll
+            h += 0.3 * Math.sin(x * 0.08) * Math.cos(z * 0.07);
+            positions[i + 2] = h;
+        }
+        groundGeo.computeVertexNormals();
+
+        const groundMat = new THREE.MeshStandardMaterial({
+            color: 0x3a7a3a,
+            roughness: 0.9,
+            metalness: 0.0,
+            flatShading: false,
+            side: THREE.DoubleSide,
+        });
+        const ground = new THREE.Mesh(groundGeo, groundMat);
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        scene.add(ground);
+
+        // ----- Water -----
+        const waterGeo = new THREE.PlaneGeometry(35, 25, 1, 1);
+        const waterMat = new THREE.MeshStandardMaterial({
+            color: 0x1a6a8a,
+            transparent: true,
+            opacity: 0.7,
+            roughness: 0.2,
+            metalness: 0.6,
+            side: THREE.DoubleSide,
+        });
+        const water = new THREE.Mesh(waterGeo, waterMat);
+        water.position.set(-18, 0.2, -10);
+        water.rotation.x = -Math.PI / 2;
+        water.receiveShadow = true;
+        scene.add(water);
+
+        // second water body
+        const water2 = new THREE.Mesh(
+            new THREE.PlaneGeometry(18, 14, 1, 1),
+            waterMat
+        );
+        water2.position.set(24, 0.2, -22);
+        water2.rotation.x = -Math.PI / 2;
+        water2.receiveShadow = true;
+        scene.add(water2);
+
+        // ----- Helper: random in range -----
+        const rand = (min, max) => Math.random() * (max - min) + min;
+
+        // ----- Trees -----
+        function createTree(x, z, scale = 1) {
+            const group = new THREE.Group();
+            const trunkH = rand(0.8, 1.8) * scale;
+            const trunk = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.25 * scale, 0.4 * scale, trunkH, 6),
+                new THREE.MeshStandardMaterial({ color: 0x6b4c3b, roughness: 0.9 })
+            );
+            trunk.position.y = trunkH / 2;
+            trunk.castShadow = true;
+            trunk.receiveShadow = true;
+            group.add(trunk);
+
+            const foliage = new THREE.Mesh(
+                new THREE.ConeGeometry(rand(1.2, 2.2) * scale, rand(1.8, 3.0) * scale, 7),
+                new THREE.MeshStandardMaterial({
+                    color: new THREE.Color().setHSL(0.28 + Math.random() * 0.06, 0.6, 0.3 + Math.random() * 0.15),
+                    roughness: 0.8,
+                })
+            );
+            foliage.position.y = trunkH + rand(0.2, 0.8) * scale;
+            foliage.castShadow = true;
+            foliage.receiveShadow = true;
+            group.add(foliage);
+
+            const yOffset = getHeight(x, z);
+            group.position.set(x, yOffset, z);
+            group.rotation.y = rand(0, Math.PI * 2);
+            return group;
+        }
+
+        function getHeight(x, z) {
+            let h = 0;
+            h += 2.5 * Math.exp(-((x - 10) ** 2 + (z - 8) ** 2) / 80);
+            h += 3.0 * Math.exp(-((x + 12) ** 2 + (z - 15) ** 2) / 100);
+            h += 2.0 * Math.exp(-((x + 5) ** 2 + (z + 18) ** 2) / 70);
+            h += 1.8 * Math.exp(-((x - 18) ** 2 + (z + 12) ** 2) / 90);
+            h += 2.2 * Math.exp(-((x + 20) ** 2 + (z + 5) ** 2) / 110);
+            h += 0.3 * Math.sin(x * 0.08) * Math.cos(z * 0.07);
+            return h;
+        }
+
+        // plant trees
+        for (let i = 0; i < 180; i++) {
+            const x = rand(-55, 55);
+            const z = rand(-55, 55);
+            // avoid water & buildings
+            if (Math.hypot(x + 18, z + 10) < 20) continue;
+            if (Math.hypot(x - 24, z + 22) < 12) continue;
+            if (Math.hypot(x, z) < 6) continue;
+            if (Math.abs(x) < 4 && Math.abs(z) < 4) continue;
+            const tree = createTree(x, z, rand(0.6, 1.4));
+            scene.add(tree);
+        }
+
+        // ----- Buildings (Business & Farms) -----
+        const buildingColors = [0x8a7a6a, 0x9a8a7a, 0x7a8a8a, 0xbaaa8a, 0x6a7a7a, 0xaa9a7a];
+
+        function createBuilding(x, z, w, d, h, color, hasRoof = true) {
+            const group = new THREE.Group();
+            const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.7, metalness: 0.1 });
+            const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+            body.position.y = h / 2;
+            body.castShadow = true;
+            body.receiveShadow = true;
+            group.add(body);
+
+            if (hasRoof) {
+                const roofMat = new THREE.MeshStandardMaterial({ color: 0x6a3a2a, roughness: 0.8 });
+                const roof = new THREE.Mesh(
+                    new THREE.ConeGeometry(Math.max(w, d) * 0.7, h * 0.4, 4),
+                    roofMat
+                );
+                roof.position.y = h + 0.1;
+                roof.rotation.y = Math.PI / 4;
+                roof.castShadow = true;
+                group.add(roof);
+            }
+
+            // windows
+            const winMat = new THREE.MeshStandardMaterial({
+                color: 0x88ccff,
+                emissive: 0x224466,
+                emissiveIntensity: 0.3,
+                transparent: true,
+                opacity: 0.6,
+            });
+            for (let i = 0; i < 4; i++) {
+                const wx = (i % 2 === 0) ? -w * 0.35 : w * 0.35;
+                const wz = (i < 2) ? -d * 0.35 : d * 0.35;
+                const win = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.8), winMat);
+                if (i % 2 === 0) {
+                    win.position.set(wx, h * 0.6, (i < 2) ? -d / 2 - 0.01 : d / 2 + 0.01);
+                    win.rotation.y = (i < 2) ? 0 : Math.PI;
+                } else {
+                    win.position.set((i < 2) ? -w / 2 - 0.01 : w / 2 + 0.01, h * 0.6, wz);
+                    win.rotation.y = (i < 2) ? -Math.PI / 2 : Math.PI / 2;
+                }
+                group.add(win);
+            }
+
+            const yOff = getHeight(x, z);
+            group.position.set(x, yOff, z);
+            return group;
+        }
+
+        // Business buildings
+        const bizPositions = [
+            [-8, 6, 4, 5, 5, 0x8a7a6a],
+            [-4, 10, 4, 4, 4, 0x9a8a7a],
+            [6, 8, 5, 6, 6, 0x7a8a8a],
+            [10, 4, 4, 4, 5, 0xbaaa8a],
+            [-12, -2, 5, 5, 4, 0x6a7a7a],
+            [14, -2, 4, 6, 5, 0xaa9a7a],
+            [-6, -8, 6, 4, 4, 0x8a7a6a],
+            [0, -12, 5, 5, 5, 0x9a8a7a],
+            [18, 2, 4, 5, 6, 0x7a8a8a],
+            [-20, 4, 5, 4, 4, 0xbaaa8a],
+        ];
+        bizPositions.forEach(([x, z, w, d, h, c]) => {
+            const b = createBuilding(x, z, w, d, h, c, true);
+            scene.add(b);
+        });
+
+        // Farms (longer, lower buildings)
+        const farmPos = [
+            [-22, -18, 8, 3, 2.5, 0x7a6a4a],
+            [-18, -14, 7, 3, 2.5, 0x8a7a5a],
+            [20, -16, 9, 3, 2.5, 0x6a5a3a],
+            [24, -12, 7, 3, 2.5, 0x7a6a4a],
+            [-10, -24, 8, 3, 2.5, 0x8a7a5a],
+            [10, -28, 9, 3, 2.5, 0x6a5a3a],
+            [-28, 12, 8, 3, 2.5, 0x7a6a4a],
+            [-32, 8, 7, 3, 2.5, 0x8a7a5a],
+            [28, 14, 9, 3, 2.5, 0x6a5a3a],
+            [32, 10, 7, 3, 2.5, 0x7a6a4a],
+        ];
+        farmPos.forEach(([x, z, w, d, h, c]) => {
+            const b = createBuilding(x, z, w, d, h, c, false);
+            scene.add(b);
+            // add some crop rows
+            for (let i = 0; i < 6; i++) {
+                const crop = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.08, 0.12, 0.4, 4),
+                    new THREE.MeshStandardMaterial({ color: 0x4a8a3a, roughness: 0.9 })
+                );
+                const cx = x + (i - 2.5) * 0.9;
+                const cz = z + rand(-d / 2 + 0.5, d / 2 - 0.5);
+                const yOff = getHeight(cx, cz);
+                crop.position.set(cx, yOff + 0.2, cz);
+                crop.castShadow = true;
+                scene.add(crop);
+            }
+        });
+
+        // ----- People (Rich & Poor) -----
+        const people = [];
+
+        function createPerson(x, z, isRich) {
+            const group = new THREE.Group();
+            const skin = 0xf0c8a0;
+            const skinMat = new THREE.MeshStandardMaterial({ color: skin, roughness: 0.7 });
+
+            // body
+            const bodyColor = isRich ? 0x2a5a8a : 0x5a4a3a;
+            const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor, roughness: 0.8 });
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.0, 0.45), bodyMat);
+            body.position.y = 0.9;
+            body.castShadow = true;
+            group.add(body);
+
+            // head
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), skinMat);
+            head.position.y = 1.65;
+            head.castShadow = true;
+            group.add(head);
+
+            // legs
+            const legMat = new THREE.MeshStandardMaterial({
+                color: isRich ? 0x1a3a5a : 0x3a2a1a,
+                roughness: 0.9,
+            });
+            for (let side of [-1, 1]) {
+                const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.10, 0.6, 6), legMat);
+                leg.position.set(side * 0.18, 0.3, 0);
+                leg.castShadow = true;
+                group.add(leg);
+            }
+
+            // arms
+            const armMat = new THREE.MeshStandardMaterial({ color: skin, roughness: 0.7 });
+            for (let side of [-1, 1]) {
+                const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 0.55, 6), armMat);
+                arm.position.set(side * 0.5, 1.2, 0);
+                arm.rotation.z = side * 0.2;
+                arm.castShadow = true;
+                group.add(arm);
+            }
+
+            // Android device (in right hand) - with dynamic language icons (just color)
+            const deviceMat = new THREE.MeshStandardMaterial({
+                color: 0x222233,
+                roughness: 0.3,
+                metalness: 0.7,
+                emissive: 0x2244aa,
+                emissiveIntensity: 0.2,
+            });
+            const device = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.32, 0.04), deviceMat);
+            device.position.set(0.55, 0.95, 0.1);
+            device.rotation.z = -0.3;
+            device.rotation.x = 0.2;
+            group.add(device);
+
+            // screen glow (color varies by language)
+            const langColors = [0x88ddff, 0xffaa44, 0x44ff88, 0xff6688];
+            const langColor = langColors[Math.floor(Math.random() * langColors.length)];
+            const screenMat = new THREE.MeshStandardMaterial({
+                color: langColor,
+                emissive: langColor,
+                emissiveIntensity: 0.5,
+                transparent: true,
+                opacity: 0.7,
+            });
+            const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.26), screenMat);
+            screen.position.set(0.55, 0.95, 0.06);
+            screen.rotation.y = 0.1;
+            screen.rotation.z = -0.3;
+            screen.rotation.x = 0.2;
+            group.add(screen);
+
+            // rich accessories
+            if (isRich) {
+                const chainMat = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.8, roughness: 0.2 });
+                const chain = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.03, 6, 12), chainMat);
+                chain.position.set(0, 1.1, 0.2);
+                chain.rotation.x = Math.PI / 2;
+                group.add(chain);
+
+                const hatMat = new THREE.MeshStandardMaterial({ color: 0x8a2a2a, roughness: 0.6 });
+                const hat = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.25, 8), hatMat);
+                hat.position.y = 1.8;
+                hat.castShadow = true;
+                group.add(hat);
+            } else {
+                const capMat = new THREE.MeshStandardMaterial({ color: 0x4a3a2a, roughness: 0.9 });
+                const cap = new THREE.Mesh(new THREE.SphereGeometry(0.32, 6, 6, 0, Math.PI * 2, 0, Math.PI / 2), capMat);
+                cap.position.y = 1.75;
+                cap.scale.set(1, 0.3, 1);
+                group.add(cap);
+            }
+
+            const yOff = getHeight(x, z);
+            group.position.set(x, yOff, z);
+            group.rotation.y = rand(0, Math.PI * 2);
+
+            const data = {
+                mesh: group,
+                x,
+                z,
+                angle: rand(0, Math.PI * 2),
+                speed: rand(0.005, 0.025),
+                radius: rand(0.5, 2.5),
+                isRich,
+                phase: rand(0, Math.PI * 2),
+            };
+            return data;
+        }
+
+        // spawn people
+        for (let i = 0; i < 45; i++) {
+            let x, z, valid;
+            let attempts = 0;
+            do {
+                x = rand(-40, 40);
+                z = rand(-40, 40);
+                valid = true;
+                if (Math.hypot(x + 18, z + 10) < 18) valid = false;
+                if (Math.hypot(x - 24, z + 22) < 10) valid = false;
+                if (Math.hypot(x, z) < 5) valid = false;
+                for (const [bx, bz] of bizPositions) {
+                    if (Math.hypot(x - bx, z - bz) < 3.5) valid = false;
+                }
+                for (const [bx, bz] of farmPos) {
+                    if (Math.hypot(x - bx, z - bz) < 3.5) valid = false;
+                }
+                attempts++;
+                if (attempts > 50) break;
+            } while (!valid);
+
+            if (valid) {
+                const isRich = Math.random() < 0.35;
+                const p = createPerson(x, z, isRich);
+                scene.add(p.mesh);
+                people.push(p);
+            }
+        }
+
+        // ----- Cars -----
+        const cars = [];
+
+        function createCar(x, z, color) {
+            const group = new THREE.Group();
+            const bodyMat = new THREE.MeshStandardMaterial({ color, roughness: 0.3, metalness: 0.6 });
+            const body = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.4, 0.7), bodyMat);
+            body.position.y = 0.3;
+            body.castShadow = true;
+            body.receiveShadow = true;
+            group.add(body);
+
+            const cabin = new THREE.Mesh(
+                new THREE.BoxGeometry(0.6, 0.35, 0.6),
+                new THREE.MeshStandardMaterial({
+                    color: 0x88ccff,
+                    transparent: true,
+                    opacity: 0.5,
+                    roughness: 0.1,
+                    metalness: 0.3,
+                })
+            );
+            cabin.position.set(-0.05, 0.6, 0);
+            cabin.castShadow = true;
+            group.add(cabin);
+
+            const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+            for (let side of [-1, 1]) {
+                for (let front of [-1, 1]) {
+                    const wheel = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.15, 0.15, 0.08, 8),
+                        wheelMat
+                    );
+                    wheel.rotation.x = Math.PI / 2;
+                    wheel.position.set(front * 0.4, 0.08, side * 0.4);
+                    group.add(wheel);
+                }
+            }
+
+            const hlMat = new THREE.MeshStandardMaterial({
+                color: 0xffffaa,
+                emissive: 0xffdd44,
+                emissiveIntensity: 0.5,
+            });
+            for (let side of [-1, 1]) {
+                const hl = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 6), hlMat);
+                hl.position.set(0.65, 0.2, side * 0.2);
+                group.add(hl);
+            }
+
+            const yOff = getHeight(x, z);
+            group.position.set(x, yOff + 0.1, z);
+            group.rotation.y = rand(0, Math.PI * 2);
+            return { mesh: group, x, z, angle: rand(0, Math.PI * 2), speed: rand(0.01, 0.04), radius: rand(3, 8) };
+        }
+
+        const carColors = [0xcc2233, 0x2244aa, 0x22aa44, 0xcc8822, 0x8822cc, 0x22cccc];
+        for (let i = 0; i < 18; i++) {
+            let x = rand(-35, 35);
+            let z = rand(-35, 35);
+            if (Math.hypot(x + 18, z + 10) < 16) continue;
+            if (Math.hypot(x - 24, z + 22) < 10) continue;
+            if (Math.hypot(x, z) < 6) continue;
+            const c = createCar(x, z, carColors[i % carColors.length]);
+            scene.add(c.mesh);
+            cars.push(c);
+        }
+
+        // ----- Bikes -----
+        const bikes = [];
+
+        function createBike(x, z) {
+            const group = new THREE.Group();
+            const frameMat = new THREE.MeshStandardMaterial({ color: 0x556677, metalness: 0.7, roughness: 0.3 });
+
+            const frame = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.06, 0.04), frameMat);
+            frame.position.y = 0.3;
+            group.add(frame);
+
+            const seat = new THREE.Mesh(
+                new THREE.BoxGeometry(0.2, 0.04, 0.1),
+                new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.9 })
+            );
+            seat.position.set(-0.15, 0.4, 0);
+            group.add(seat);
+
+            const handle = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.02, 0.02, 0.3, 4),
+                new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.5 })
+            );
+            handle.position.set(0.25, 0.4, 0);
+            handle.rotation.x = 0.2;
+            group.add(handle);
+
+            const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+            for (let side of [-1, 1]) {
+                const wheel = new THREE.Mesh(
+                    new THREE.TorusGeometry(0.15, 0.04, 6, 10),
+                    wheelMat
+                );
+                wheel.position.set(side * 0.3, 0.08, 0);
+                wheel.rotation.y = Math.PI / 2;
+                group.add(wheel);
+            }
+
+            const yOff = getHeight(x, z);
+            group.position.set(x, yOff + 0.05, z);
+            group.rotation.y = rand(0, Math.PI * 2);
+            return { mesh: group, x, z, angle: rand(0, Math.PI * 2), speed: rand(0.015, 0.05), radius: rand(2, 6) };
+        }
+
+        for (let i = 0; i < 12; i++) {
+            let x = rand(-30, 30);
+            let z = rand(-30, 30);
+            if (Math.hypot(x + 18, z + 10) < 14) continue;
+            if (Math.hypot(x - 24, z + 22) < 8) continue;
+            if (Math.hypot(x, z) < 5) continue;
+            const b = createBike(x, z);
+            scene.add(b.mesh);
+            bikes.push(b);
+        }
+
+        // ----- Clouds -----
+        const clouds = [];
+
+        function createCloud(x, y, z, scale = 1) {
+            const group = new THREE.Group();
+            const mat = new THREE.MeshStandardMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.7,
+                roughness: 0.9,
+                metalness: 0.0,
+            });
+            const parts = [
+                [0, 0, 0, 2.5],
+                [-1.8, 0.3, 0.2, 1.8],
+                [1.8, 0.2, -0.2, 1.9],
+                [-0.8, 0.9, 0.5, 1.4],
+                [0.9, 0.8, -0.4, 1.5],
+                [-2.5, -0.2, 0.6, 1.2],
+                [2.5, -0.1, -0.5, 1.3],
+            ];
+            for (const [px, py, pz, r] of parts) {
+                const sphere = new THREE.Mesh(new THREE.SphereGeometry(r * scale, 7, 7), mat);
+                sphere.position.set(px * scale, py * scale + 0.5 * scale, pz * scale);
+                sphere.castShadow = false;
+                group.add(sphere);
+            }
+            group.position.set(x, y, z);
+            return group;
+        }
+
+        for (let i = 0; i < 30; i++) {
+            const x = rand(-60, 60);
+            const z = rand(-60, 60);
+            const y = rand(18, 35);
+            const cloud = createCloud(x, y, z, rand(0.6, 1.8));
+            scene.add(cloud);
+            clouds.push({ mesh: cloud, speed: rand(0.002, 0.008), x, z, y });
+        }
+
+        // ----- Birds -----
+        const birds = [];
+
+        function createBird() {
+            const group = new THREE.Group();
+            const mat = new THREE.MeshStandardMaterial({ color: 0x222233, roughness: 0.8 });
+            const body = new THREE.Mesh(new THREE.SphereGeometry(0.08, 4, 4), mat);
+            body.scale.set(1, 0.6, 1.5);
+            group.add(body);
+
+            const wingMat = new THREE.MeshStandardMaterial({ color: 0x333344, side: THREE.DoubleSide });
+            for (let side of [-1, 1]) {
+                const wing = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.05, 3), wingMat);
+                wing.position.set(side * 0.1, 0, 0);
+                wing.rotation.z = side * 0.8;
+                wing.scale.set(1, 1, 0.2);
+                group.add(wing);
+            }
+            return group;
+        }
+
+        for (let i = 0; i < 25; i++) {
+            const bird = createBird();
+            const x = rand(-50, 50);
+            const z = rand(-50, 50);
+            const y = rand(6, 18);
+            bird.position.set(x, y, z);
+            bird.scale.set(rand(0.8, 1.6), rand(0.8, 1.6), rand(0.8, 1.6));
+            scene.add(bird);
+            birds.push({
+                mesh: bird,
+                x,
+                z,
+                y,
+                speedX: rand(0.01, 0.04),
+                speedZ: rand(0.01, 0.04),
+                phase: rand(0, Math.PI * 2),
+                flap: 0,
+            });
+        }
+
+        // ----- Roads / paths (just some visual lines) -----
+        const roadMat = new THREE.MeshStandardMaterial({
+            color: 0x4a4a4a,
+            roughness: 0.9,
+            transparent: true,
+            opacity: 0.3,
+        });
+        const roadPoints = [
+            [-25, -20, 25, -20],
+            [-25, -10, 25, -10],
+            [-25, 0, 25, 0],
+            [-25, 10, 25, 10],
+            [-20, -25, -20, 25],
+            [-10, -25, -10, 25],
+            [0, -25, 0, 25],
+            [10, -25, 10, 25],
+            [20, -25, 20, 25],
+        ];
+        for (const [x1, z1, x2, z2] of roadPoints) {
+            const dx = x2 - x1,
+                dz = z2 - z1;
+            const len = Math.hypot(dx, dz);
+            const road = new THREE.Mesh(
+                new THREE.PlaneGeometry(len, 0.3),
+                roadMat
+            );
+            road.position.set((x1 + x2) / 2, 0.05, (z1 + z2) / 2);
+            road.rotation.x = -Math.PI / 2;
+            road.rotation.z = -Math.atan2(dz, dx);
+            scene.add(road);
+        }
+
+        // ----- Animation loop -----
+        let time = 0;
+
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.01;
+
+            // animate people (wander)
+            for (const p of people) {
+                p.angle += p.speed * 0.5;
+                const r = p.radius + 0.3 * Math.sin(time * 0.5 + p.phase);
+                const tx = p.x + Math.cos(p.angle) * r * 0.02;
+                const tz = p.z + Math.sin(p.angle) * r * 0.02;
+                if (Math.abs(tx) < 42 && Math.abs(tz) < 42) {
+                    p.mesh.position.x += (tx - p.mesh.position.x) * 0.02;
+                    p.mesh.position.z += (tz - p.mesh.position.z) * 0.02;
+                }
+                const bob = 0.03 * Math.sin(time * 1.2 + p.phase);
+                const yOff = getHeight(p.mesh.position.x, p.mesh.position.z);
+                p.mesh.position.y = yOff + bob;
+                p.mesh.rotation.y += 0.01;
+                // device glow pulse
+                const device = p.mesh.children.find(c => c.type === 'Mesh' && c.material && c.material.emissive &&
+                    c.material.color.getHex() === 0x2244aa);
+                if (device) {
+                    const pulse = 0.2 + 0.3 * (0.5 + 0.5 * Math.sin(time * 2 + p.phase));
+                    device.material.emissiveIntensity = pulse;
+                }
+            }
+
+            // animate cars
+            for (const c of cars) {
+                c.angle += c.speed;
+                const cx = c.x + Math.cos(c.angle) * c.radius;
+                const cz = c.z + Math.sin(c.angle) * c.radius;
+                c.mesh.position.x = cx;
+                c.mesh.position.z = cz;
+                const yOff = getHeight(cx, cz);
+                c.mesh.position.y = yOff + 0.1;
+                c.mesh.rotation.y = -c.angle + Math.PI / 2;
+            }
+
+            // animate bikes
+            for (const b of bikes) {
+                b.angle += b.speed * 0.7;
+                const bx = b.x + Math.cos(b.angle + 0.5 * Math.sin(time * 0.3)) * b.radius;
+                const bz = b.z + Math.sin(b.angle + 0.5 * Math.cos(time * 0.4)) * b.radius;
+                b.mesh.position.x = bx;
+                b.mesh.position.z = bz;
+                const yOff = getHeight(bx, bz);
+                b.mesh.position.y = yOff + 0.05;
+                b.mesh.rotation.y = -b.angle + Math.PI / 2 + 0.1 * Math.sin(time);
+            }
+
+            // animate clouds
+            for (const c of clouds) {
+                c.x += c.speed * 0.3;
+                if (c.x > 65) c.x = -65;
+                c.mesh.position.x = c.x;
+                c.mesh.position.z = c.z + 0.3 * Math.sin(time * 0.05 + c.x);
+            }
+
+            // animate birds
+            for (const b of birds) {
+                b.x += b.speedX * 0.5;
+                b.z += b.speedZ * 0.5;
+                b.y += 0.01 * Math.sin(time * 0.7 + b.phase);
+                if (b.x > 55) b.x = -55;
+                if (b.x < -55) b.x = 55;
+                if (b.z > 55) b.z = -55;
+                if (b.z < -55) b.z = 55;
+                b.mesh.position.set(b.x, b.y, b.z);
+                b.flap += 0.08;
+                const wingAngle = 0.5 * Math.sin(b.flap * 3);
+                const wings = b.mesh.children.filter(c => c.type === 'Mesh' && c.geometry.type === 'ConeGeometry');
+                wings.forEach((w, i) => {
+                    if (i === 0) w.rotation.z = 0.8 + wingAngle;
+                    if (i === 1) w.rotation.z = -0.8 - wingAngle;
+                });
+                b.mesh.rotation.y = Math.atan2(b.speedZ, b.speedX);
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // ----- Hide loading -----
+        setTimeout(() => {
+            document.getElementById('loading').classList.add('hidden');
+        }, 800);
+
+        animate();
+
+        // ----- Chat functionality with programming responses -----
+        const chatContainer = document.getElementById('chat-container');
+        const chatMessages = document.getElementById('chat-messages');
+        const chatInput = document.getElementById('chatInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const toggleBtn = document.getElementById('toggleBtn');
+        let chatMinimized = false;
+
+        window.toggleChat = function() {
+            chatMinimized = !chatMinimized;
+            chatContainer.classList.toggle('minimized', chatMinimized);
+            toggleBtn.textContent = chatMinimized ? '+' : '−';
+            if (!chatMinimized) {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        };
+
+        // ----- Programming response generator -----
+        function getProgrammingResponse(input) {
+            const lower = input.toLowerCase();
+
+            // Detect language
+            const hasCpp = /c\+\+|cpp/.test(lower);
+            const hasC = /\bc\b(?!\+\+)/.test(lower) && !hasCpp;
+            const hasPython = /python|py/.test(lower);
+            const hasJava = /\bjava\b/.test(lower);
+
+            // Detect topics
+            const hasFunction = /function|method|def/.test(lower);
+            const hasClass = /class|object|inheritance|polymorphism/.test(lower);
+            const hasArray = /array|list|sort|search/.test(lower);
+            const hasLoop = /loop|for|while|iterate/.test(lower);
+            const hasAlgorithm = /algorithm|sort|search|binary|quick|merge/.test(lower);
+            const hasHello = /hello|world|print/.test(lower);
+
+            // Build response based on language and topic
+            let response = "";
+
+            // If no specific language, ask which language
+            if (!hasCpp && !hasC && !hasPython && !hasJava) {
+                return "मैं C, C++, Python, Java – सभी भाषाओं में जवाब दे सकता हूँ। कृपया बताएँ कि आप किस भाषा में कोड चाहते हैं (जैसे 'Python में function')।";
+            }
+
+            // Determine primary language
+            let lang = "";
+            if (hasPython) lang = "Python";
+            else if (hasJava) lang = "Java";
+            else if (hasCpp) lang = "C++";
+            else if (hasC) lang = "C";
+            else lang = "C++"; // default
+
+            // Topic based responses
+            if (hasHello) {
+                if (lang === "Python") {
+                    response = `**Python** में "Hello, World!":\n\n\`\`\`python\nprint("Hello, World!")\n\`\`\``;
+                } else if (lang === "Java") {
+                    response = `**Java** में "Hello, World!":\n\n\`\`\`java\npublic class HelloWorld {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}\n\`\`\``;
+                } else if (lang === "C++") {
+                    response = `**C++** में "Hello, World!":\n\n\`\`\`cpp\n#include <iostream>\nusing namespace std;\nint main() {\n    cout << "Hello, World!" << endl;\n    return 0;\n}\n\`\`\``;
+                } else if (lang === "C") {
+                    response = `**C** में "Hello, World!":\n\n\`\`\`c\n#include <stdio.h>\nint main() {\n    printf("Hello, World!\\n");\n    return 0;\n}\n\`\`\``;
+                }
+            } else if (hasFunction) {
+                if (lang === "Python") {
+                    response = `**Python** function example:\n\n\`\`\`python\ndef add(a, b):\n    return a + b\n\nresult = add(5, 3)\nprint(result)  # Output: 8\n\`\`\``;
+                } else if (lang === "Java") {
+                    response = `**Java** method example:\n\n\`\`\`java\npublic class Calculator {\n    public static int add(int a, int b) {\n        return a + b;\n    }\n    public static void main(String[] args) {\n        int result = add(5, 3);\n        System.out.println(result); // 8\n    }\n}\n\`\`\``;
+                } else if (lang === "C++") {
+                    response = `**C++** function example:\n\n\`\`\`cpp\n#include <iostream>\nusing namespace std;\nint add(int a, int b) {\n    return a + b;\n}\nint main() {\n    int result = add(5, 3);\n    cout << result << endl; // 8\n    return 0;\n}\n\`\`\``;
+                } else if (lang === "C") {
+                    response = `**C** function example:\n\n\`\`\`c\n#include <stdio.h>\nint add(int a, int b) {\n    return a + b;\n}\nint main() {\n    int result = add(5, 3);\n    printf("%d\\n", result); // 8\n    return 0;\n}\n\`\`\``;
+                }
+            } else if (hasClass) {
+                if (lang === "Python") {
+                    response = `**Python** class example:\n\n\`\`\`python\nclass Person:\n    def __init__(self, name, age):\n        self.name = name\n        self.age = age\n    def greet(self):\n        return f"Hello, I'm {self.name} and I'm {self.age} years old."\n\np = Person("Alice", 30)\nprint(p.greet())\n\`\`\``;
+                } else if (lang === "Java") {
+                    response = `**Java** class example:\n\n\`\`\`java\npublic class Person {\n    private String name;\n    private int age;\n    public Person(String name, int age) {\n        this.name = name;\n        this.age = age;\n    }\n    public String greet() {\n        return "Hello, I'm " + name + " and I'm " + age + " years old.";\n    }\n    public static void main(String[] args) {\n        Person p = new Person("Alice", 30);\n        System.out.println(p.greet());\n    }\n}\n\`\`\``;
+                } else if (lang === "C++") {
+                    response = `**C++** class example:\n\n\`\`\`cpp\n#include <iostream>\n#include <string>\nusing namespace std;\nclass Person {\nprivate:\n    string name;\n    int age;\npublic:\n    Person(string n, int a) : name(n), age(a) {}\n    string greet() {\n        return "Hello, I'm " + name + " and I'm " + to_string(age) + " years old.";\n    }\n};\nint main() {\n    Person p("Alice", 30);\n    cout << p.greet() << endl;\n    return 0;\n}\n\`\`\``;
+                } else if (lang === "C") {
+                    response = `**C** में class नहीं है, लेकिन आप struct और function pointers का उपयोग कर सकते हैं। उदाहरण:\n\n\`\`\`c\n#include <stdio.h>\ntypedef struct {\n    char name[50];\n    int age;\n} Person;\n\nvoid greet(Person *p) {\n    printf("Hello, I'm %s and I'm %d years old.\\n", p->name, p->age);\n}\n\nint main() {\n    Person p = {"Alice", 30};\n    greet(&p);\n    return 0;\n}\n\`\`\``;
+                }
+            } else if (hasArray || hasAlgorithm) {
+                if (lang === "Python") {
+                    response = `**Python** में array sort:\n\n\`\`\`python\narr = [5, 2, 9, 1, 5, 6]\narr.sort()  # in-place\nprint(arr)  # [1, 2, 5, 5, 6, 9]\n\n# या sorted() का उपयोग करें\nsorted_arr = sorted(arr)\n\`\`\``;
+                } else if (lang === "Java") {
+                    response = `**Java** में array sort:\n\n\`\`\`java\nimport java.util.Arrays;\npublic class Main {\n    public static void main(String[] args) {\n        int[] arr = {5, 2, 9, 1, 5, 6};\n        Arrays.sort(arr);\n        System.out.println(Arrays.toString(arr)); // [1, 2, 5, 5, 6, 9]\n    }\n}\n\`\`\``;
+                } else if (lang === "C++") {
+                    response = `**C++** में array sort:\n\n\`\`\`cpp\n#include <iostream>\n#include <algorithm>\nusing namespace std;\nint main() {\n    int arr[] = {5, 2, 9, 1, 5, 6};\n    int n = sizeof(arr)/sizeof(arr[0]);\n    sort(arr, arr+n);\n    for(int x : arr) cout << x << " "; // 1 2 5 5 6 9\n    return 0;\n}\n\`\`\``;
+                } else if (lang === "C") {
+                    response = `**C** में array sort (qsort):\n\n\`\`\`c\n#include <stdio.h>\n#include <stdlib.h>\nint cmp(const void *a, const void *b) {\n    return (*(int*)a - *(int*)b);\n}\nint main() {\n    int arr[] = {5, 2, 9, 1, 5, 6};\n    int n = sizeof(arr)/sizeof(arr[0]);\n    qsort(arr, n, sizeof(int), cmp);\n    for(int i=0; i<n; i++) printf("%d ", arr[i]); // 1 2 5 5 6 9\n    return 0;\n}\n\`\`\``;
+                }
+            } else if (hasLoop) {
+                if (lang === "Python") {
+                    response = `**Python** for loop:\n\n\`\`\`python\nfor i in range(5):\n    print(i)\n# Output: 0 1 2 3 4\n\`\`\``;
+                } else if (lang === "Java") {
+                    response = `**Java** for loop:\n\n\`\`\`java\nfor (int i = 0; i < 5; i++) {\n    System.out.println(i);\n}\n\`\`\``;
+                } else if (lang === "C++") {
+                    response = `**C++** for loop:\n\n\`\`\`cpp\nfor (int i = 0; i < 5; i++) {\n    cout << i << endl;\n}\n\`\`\``;
+                } else if (lang === "C") {
+                    response = `**C** for loop:\n\n\`\`\`c\nfor (int i = 0; i < 5; i++) {\n    printf("%d\\n", i);\n}\n\`\`\``;
+                }
+            } else {
+                // General fallback
+                response = `मैंने आपका प्रश्न समझ लिया। क्या आप **${lang}** में एक उदाहरण चाहते हैं? कृपया और स्पष्ट करें (जैसे "Python function", "Java class", "C++ array")।`;
+            }
+
+            // Add a friendly intro
+            return `🤖 **${lang}** में उत्तर:\n\n${response}`;
+        }
+
+        // ----- Leader responses (fallback) -----
+        const leaderResponses = [
+            "नमस्ते! मैं इस दुनिया का Leader हूँ। आपकी बात सुनकर अच्छा लगा।",
+            "हाँ, हमारी दुनिया में AI का बहुत उपयोग होता है। ChatGPT, Claude, Gemini सब काम करते हैं।",
+            "आप देख रहे हैं, यहाँ लोग AI का उपयोग अपने Android डिवाइस पर कर रहे हैं।",
+            "हमारी दुनिया में हर कोई खुश है। अमीर और गरीब सब मिलकर रहते हैं।",
+            "आप इस दुनिया के बारे में क्या जानना चाहते हैं? मैं बताने को तैयार हूँ।",
+            "यहाँ के लोग बहुत मेहनती हैं। खेती, व्यापार, सब कुछ चल रहा है।",
+            "AI हमारी मदद करता है - फसलों से लेकर व्यापार तक, सब जगह।",
+            "आपको यह दुनिया कैसी लगी? मुझे आपकी राय जाननी है।",
+            "हमारी दुनिया में पहाड़, पानी, पक्षी, बादल - सब कुछ है।",
+            "आप इस दुनिया के हिस्सा हैं। कोई भी सवाल पूछ सकते हैं।",
+            "हाँ, हमारे पास गाड़ियाँ और बाइक्स भी हैं। सब चल रहा है।",
+            "मुझे आपसे बात करके बहुत अच्छा लग रहा है। और कुछ पूछें?",
+            "यहाँ के लोग AI को अपने हाथों में रखते हैं, बिल्कुल आपके जैसे।",
+            "हमारी दुनिया में हर दिन कुछ नया होता है। आप भी देख सकते हैं।",
+            "Leader के रूप में मेरी कोशिश है कि सब खुश रहें। आप भी खुश रहें!",
+        ];
+
+        function addMessage(text, isUser = false) {
+            const div = document.createElement('div');
+            div.className = `msg ${isUser ? 'user' : 'leader'}`;
+            if (!isUser) {
+                // Convert newlines to <br> and handle code blocks
+                const formatted = text.replace(/\n/g, '<br>').replace(/```([\s\S]*?)```/g, '<code>$1</code>');
+                div.innerHTML = `<span class="name">👑 Leader</span>${formatted}`;
+            } else {
+                div.textContent = text;
+            }
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function getLeaderResponse(input) {
+            // First check if it's a programming query
+            const progKeywords = ['code', 'program', 'function', 'class', 'algorithm', 'sort', 'loop', 'array', 'hello world',
+                'print', 'method', 'inheritance', 'c++', 'python', 'java', 'c language', 'c programming'
+            ];
+            const lower = input.toLowerCase();
+            const isProgramming = progKeywords.some(kw => lower.includes(kw)) ||
+                (lower.includes('c') && !lower.includes('c++')) ||
+                lower.includes('java') || lower.includes('python') || lower.includes('cpp');
+
+            if (isProgramming) {
+                return getProgrammingResponse(input);
+            }
+
+            // Otherwise fallback to generic leader responses
+            const lowerInput = input.toLowerCase();
+            if (lowerInput.includes('hello') || lowerInput.includes('hi') || lowerInput.includes('namaste') || lowerInput
+                .includes('नमस्ते')) {
+                return "नमस्ते! आपका स्वागत है आसी वर्ल्ड में। मैं Leader हूँ, और मुझे C, C++, Python, Java सभी भाषाएँ आती हैं। कोई भी प्रोग्रामिंग सवाल पूछें!";
+            }
+            if (lowerInput.includes('ai') || lowerInput.includes('chatgpt') || lowerInput.includes('gemini') || lowerInput
+                .includes('claude')) {
+                return "हाँ! हमारी दुनिया में AI बहुत काम आता है। ChatGPT, Claude AI, Gemini सब लोग इस्तेमाल करते हैं। Android डिवाइस पर सब कुछ चलता है। और हाँ, मैं भी AI ही हूँ, लेकिन मुझे सभी भाषाएँ आती हैं।";
+            }
+            if (lowerInput.includes('rich') || lowerInput.includes('poor') || lowerInput.includes('अमीर') || lowerInput
+                .includes('गरीब')) {
+                return "हमारी दुनिया में अमीर और गरीब दोनों हैं, लेकिन सब एक साथ रहते हैं। AI सबकी मदद करता है। और हर किसी के पास Android डिवाइस है, जिस पर वे कोडिंग भी कर सकते हैं!";
+            }
+            if (lowerInput.includes('farm') || lowerInput.includes('खेती') || lowerInput.includes('crop')) {
+                return "हाँ, हमारे पास बहुत सारे फार्म हैं। AI फसलों की देखभाल में मदद करता है। किसान भी Python और C++ में प्रोग्राम लिखते हैं!";
+            }
+            if (lowerInput.includes('car') || lowerInput.includes('गाड़ी') || lowerInput.includes('bike') || lowerInput
+                .includes('बाइक')) {
+                return "हमारी दुनिया में गाड़ियाँ और बाइक्स चल रही हैं। सबको आवाजाही में मदद मिलती है। और इनके कंप्यूटर सिस्टम C और Java में लिखे गए हैं।";
+            }
+            if (lowerInput.includes('cloud') || lowerInput.includes('बादल') || lowerInput.includes('bird') || lowerInput
+                .includes('पक्षी')) {
+                return "आकाश में बादल और पक्षी देखें! हमारी दुनिया में प्रकृति भी बहुत सुंदर है। पक्षी भी अपने कोड (मजाक) लिखते हैं 😄";
+            }
+            if (lowerInput.includes('hill') || lowerInput.includes('पहाड़') || lowerInput.includes('mountain')) {
+                return "हमारी दुनिया में पहाड़ियाँ भी हैं। देखिए, कितनी सुंदर हैं! वहाँ पर भी लोग अपने Android पर C++ प्रोग्राम चला रहे हैं।";
+            }
+            if (lowerInput.includes('water') || lowerInput.includes('पानी') || lowerInput.includes('lake') || lowerInput
+                .includes('झील')) {
+                return "हाँ, हमारे पास पानी भी है। झीलें और नदियाँ - सब कुछ है। पानी के किनारे बैठे लोग Java में कोडिंग करते हैं।";
+            }
+            if (lowerInput.includes('business') || lowerInput.includes('व्यापार') || lowerInput.includes('shop')) {
+                return "हमारी दुनिया में बहुत सारे व्यापार हैं। लोग AI की मदद से काम करते हैं, और अपने Android डिवाइस पर Python स्क्रिप्ट चलाते हैं।";
+            }
+            if (lowerInput.includes('thank') || lowerInput.includes('धन्यवाद') || lowerInput.includes('thanks')) {
+                return "आपका धन्यवाद! आपसे बात करके बहुत अच्छा लगा। आप हमेशा स्वागत हैं। किसी भी भाषा में कोडिंग का सवाल पूछें!";
+            }
+            // random
+            return leaderResponses[Math.floor(Math.random() * leaderResponses.length)];
+        }
+
+        function sendMessage() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+            addMessage(text, true);
+            chatInput.value = '';
+
+            // simulate leader thinking
+            setTimeout(() => {
+                const response = getLeaderResponse(text);
+                addMessage(response, false);
+            }, 400 + Math.random() * 600);
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // responsive
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // start with a welcome
+        setTimeout(() => {
+            addMessage("👋 नमस्ते! मैं Leader हूँ और मुझे C, C++, Python, Java – सभी भाषाएँ आती हैं। आप जो भी प्रोग्रामिंग सवाल पूछें, मैं उस भाषा में जवाब दूंगा।", false);
+        }, 1500);
+
+        console.log('🌍 आसी वर्ल्ड तैयार! AI संग पूरी दुनिया, सभी भाषाओं में मदद।');
+    </script>
+</body>
+</html>
