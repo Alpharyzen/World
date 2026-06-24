@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>🌍 आसी वर्ल्ड - AI Brain Leader</title>
+    <title>🔍 AI Leader – Google Search Brain</title>
     <style>
         * {
             margin: 0;
@@ -11,66 +11,73 @@
             box-sizing: border-box;
         }
         body {
-            overflow: hidden;
-            background: #0a0a1a;
+            min-height: 100vh;
+            background: linear-gradient(145deg, #080c1a 0%, #121b2e 100%);
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-        }
-        canvas {
-            display: block;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
         }
 
         #chat-container {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: min(640px, 94%);
-            background: rgba(10, 10, 30, 0.88);
-            backdrop-filter: blur(18px);
-            border-radius: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.10);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 40px rgba(0, 150, 255, 0.06);
-            padding: 14px 18px 18px;
-            z-index: 100;
-            transition: transform 0.3s ease, opacity 0.3s ease;
-            max-height: 85vh;
+            width: min(720px, 100%);
+            background: rgba(10, 16, 30, 0.94);
+            backdrop-filter: blur(20px);
+            border-radius: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.85), 0 0 60px rgba(0, 150, 255, 0.03);
+            padding: 18px 22px 22px;
             display: flex;
             flex-direction: column;
+            max-height: 92vh;
+            transition: transform 0.2s;
         }
-        #chat-container.minimized {
-            transform: translateX(-50%) translateY(calc(100% - 64px));
-            opacity: 0.7;
-        }
+
         #chat-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             color: #fff;
             font-weight: 600;
-            font-size: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-            cursor: pointer;
+            font-size: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             user-select: none;
             flex-shrink: 0;
         }
-        #chat-header .badge {
-            background: linear-gradient(135deg, #00c6ff, #0072ff);
-            padding: 2px 14px;
-            border-radius: 40px;
-            font-size: 11px;
-            letter-spacing: 0.5px;
-            color: #fff;
+        #chat-header .brand {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 10px;
+        }
+        #chat-header .brand .icon {
+            font-size: 28px;
+        }
+        #chat-header .brand .title {
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
+        #chat-header .badge {
+            background: rgba(0, 200, 255, 0.08);
+            padding: 4px 16px;
+            border-radius: 40px;
+            font-size: 11px;
+            letter-spacing: 0.4px;
+            color: #66ddff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid rgba(0, 200, 255, 0.06);
         }
         #chat-header .badge .dot {
-            width: 8px;
-            height: 8px;
+            width: 7px;
+            height: 7px;
             border-radius: 50%;
             background: #44ff88;
-            animation: pulse-dot 1.2s ease-in-out infinite;
+            animation: pulse-dot 1.4s ease-in-out infinite;
         }
         @keyframes pulse-dot {
             0%,
@@ -79,28 +86,21 @@
                 transform: scale(1);
             }
             50% {
-                opacity: 0.3;
-                transform: scale(0.7);
+                opacity: 0.2;
+                transform: scale(0.6);
             }
         }
-        #chat-header .toggle-btn {
-            background: none;
-            border: none;
-            color: #aaa;
-            font-size: 18px;
-            cursor: pointer;
-            padding: 0 6px;
-        }
+
         #chat-messages {
             flex: 1;
             overflow-y: auto;
-            padding: 10px 4px 6px;
+            padding: 16px 4px 10px;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 10px;
             scroll-behavior: smooth;
-            max-height: 220px;
-            min-height: 60px;
+            max-height: 440px;
+            min-height: 200px;
         }
         #chat-messages::-webkit-scrollbar {
             width: 4px;
@@ -109,75 +109,83 @@
             background: transparent;
         }
         #chat-messages::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.12);
             border-radius: 10px;
         }
+
         .msg {
-            padding: 8px 14px;
-            border-radius: 18px;
-            max-width: 92%;
+            padding: 12px 18px;
+            border-radius: 20px;
+            max-width: 94%;
             font-size: 14px;
-            line-height: 1.6;
-            animation: fadeIn 0.25s ease;
+            line-height: 1.7;
+            animation: fadeIn 0.35s ease;
             word-wrap: break-word;
         }
         .msg.user {
             align-self: flex-end;
-            background: linear-gradient(135deg, #0072ff, #00c6ff);
+            background: linear-gradient(135deg, #0072ff, #00b4ff);
             color: #fff;
             border-bottom-right-radius: 4px;
+            box-shadow: 0 2px 12px rgba(0, 114, 255, 0.15);
         }
         .msg.leader {
             align-self: flex-start;
-            background: rgba(255, 255, 255, 0.07);
-            color: #e0e8ff;
+            background: rgba(255, 255, 255, 0.04);
+            color: #e4ecff;
             border-bottom-left-radius: 4px;
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(4px);
         }
         .msg.leader .name {
             font-weight: 700;
             color: #ffd700;
             font-size: 12px;
             display: block;
-            margin-bottom: 3px;
+            margin-bottom: 4px;
+            letter-spacing: 0.3px;
         }
-        .msg.leader code {
-            background: rgba(255, 255, 255, 0.08);
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            color: #ffdd99;
+        .msg.leader .search-badge {
             display: inline-block;
-            white-space: pre-wrap;
-            word-break: break-all;
-        }
-        .msg.leader .research-badge {
-            display: inline-block;
-            background: rgba(0, 200, 255, 0.15);
-            color: #66ddff;
+            background: rgba(255, 200, 50, 0.06);
+            color: #ffd966;
             font-size: 10px;
-            padding: 2px 10px;
+            padding: 2px 12px;
             border-radius: 20px;
-            margin-top: 4px;
-            border: 1px solid rgba(0, 200, 255, 0.15);
+            margin-top: 5px;
+            border: 1px solid rgba(255, 200, 50, 0.06);
+            font-weight: 300;
+            letter-spacing: 0.3px;
+        }
+        .msg.leader .google-badge {
+            display: inline-block;
+            background: rgba(66, 133, 244, 0.10);
+            color: #66b0ff;
+            font-size: 10px;
+            padding: 2px 12px;
+            border-radius: 20px;
+            margin-top: 5px;
+            border: 1px solid rgba(66, 133, 244, 0.06);
+            font-weight: 300;
         }
         .msg .time {
             font-size: 10px;
-            opacity: 0.4;
-            margin-left: 10px;
+            opacity: 0.3;
+            margin-left: 12px;
+            font-weight: 300;
         }
         .msg .typing-dots {
             display: inline-flex;
-            gap: 4px;
+            gap: 5px;
             align-items: center;
+            padding: 2px 0;
         }
         .msg .typing-dots span {
-            width: 6px;
-            height: 6px;
+            width: 7px;
+            height: 7px;
             border-radius: 50%;
             background: #88ccff;
-            animation: typingBounce 1.2s ease-in-out infinite;
+            animation: typingBounce 1.3s ease-in-out infinite;
         }
         .msg .typing-dots span:nth-child(2) {
             animation-delay: 0.2s;
@@ -190,17 +198,17 @@
             60%,
             100% {
                 transform: translateY(0);
-                opacity: 0.4;
+                opacity: 0.3;
             }
             30% {
-                transform: translateY(-6px);
+                transform: translateY(-8px);
                 opacity: 1;
             }
         }
         @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: translateY(6px);
+                transform: translateY(10px);
             }
             to {
                 opacity: 1;
@@ -210,81 +218,84 @@
 
         #chat-input-area {
             display: flex;
-            gap: 10px;
-            margin-top: 10px;
+            gap: 12px;
+            margin-top: 14px;
             align-items: center;
             flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 60px;
+            padding: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
         }
         #chat-input-area input {
             flex: 1;
-            padding: 10px 16px;
-            border-radius: 40px;
-            border: 1px solid rgba(255, 255, 255, 0.10);
-            background: rgba(255, 255, 255, 0.05);
+            padding: 12px 18px;
+            border-radius: 60px;
+            border: none;
+            background: transparent;
             color: #fff;
             font-size: 14px;
             outline: none;
-            transition: border 0.2s;
+            min-width: 0;
         }
         #chat-input-area input::placeholder {
-            color: rgba(255, 255, 255, 0.3);
-        }
-        #chat-input-area input:focus {
-            border-color: rgba(0, 150, 255, 0.5);
+            color: rgba(255, 255, 255, 0.2);
+            font-weight: 300;
         }
         #chat-input-area button {
-            padding: 10px 22px;
-            border-radius: 40px;
+            padding: 10px 24px;
+            border-radius: 60px;
             border: none;
-            background: linear-gradient(135deg, #00c6ff, #0072ff);
+            background: linear-gradient(135deg, #4285f4, #34a853);
             color: #fff;
             font-weight: 600;
             font-size: 14px;
             cursor: pointer;
-            transition: transform 0.15s, box-shadow 0.2s;
+            transition: transform 0.15s, box-shadow 0.25s;
             white-space: nowrap;
+            margin: 3px;
         }
         #chat-input-area button:hover {
             transform: scale(1.03);
-            box-shadow: 0 4px 20px rgba(0, 114, 255, 0.4);
+            box-shadow: 0 4px 28px rgba(66, 133, 244, 0.3);
         }
         #chat-input-area button:active {
-            transform: scale(0.96);
+            transform: scale(0.95);
         }
         #chat-input-area button:disabled {
-            opacity: 0.5;
+            opacity: 0.4;
             pointer-events: none;
         }
 
         #hud {
             position: fixed;
-            top: 20px;
+            top: 18px;
             left: 50%;
             transform: translateX(-50%);
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 13px;
-            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.12);
+            font-size: 12px;
+            letter-spacing: 1.5px;
             text-align: center;
             pointer-events: none;
-            z-index: 10;
-            background: rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(6px);
-            padding: 8px 24px;
+            z-index: 5;
+            background: rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(4px);
+            padding: 5px 20px;
             border-radius: 40px;
-            border: 1px solid rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.02);
             font-weight: 300;
         }
         #hud span {
             color: #ffd700;
-            font-weight: 600;
-        }
-        #hud .ai-badge {
-            color: #66ddff;
             font-weight: 400;
-            font-size: 11px;
-            margin-left: 8px;
-            background: rgba(0, 200, 255, 0.12);
-            padding: 2px 12px;
+        }
+        #hud .g-label {
+            color: #4285f4;
+            font-weight: 400;
+            font-size: 10px;
+            margin-left: 6px;
+            background: rgba(66, 133, 244, 0.08);
+            padding: 2px 10px;
             border-radius: 20px;
         }
 
@@ -294,63 +305,78 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #0a0a1a;
+            background: #080c1a;
             color: #fff;
-            font-size: 20px;
+            font-size: 18px;
             z-index: 999;
             flex-direction: column;
             gap: 16px;
-            transition: opacity 0.8s ease;
+            transition: opacity 0.7s ease;
         }
         #loading.hidden {
             opacity: 0;
             pointer-events: none;
         }
         #loading .spinner {
-            width: 48px;
-            height: 48px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
-            border: 3px solid rgba(255, 255, 255, 0.05);
-            border-top-color: #00c6ff;
-            animation: spin 0.8s linear infinite;
+            border: 3px solid rgba(255, 255, 255, 0.04);
+            border-top-color: #4285f4;
+            animation: spin 0.9s linear infinite;
         }
         @keyframes spin {
             to {
                 transform: rotate(360deg);
             }
         }
+        #loading .sub {
+            font-size: 13px;
+            opacity: 0.4;
+            font-weight: 300;
+        }
 
         @media (max-width: 600px) {
+            body {
+                padding: 8px;
+            }
             #chat-container {
-                width: 96%;
-                padding: 10px 12px 14px;
-                bottom: 8px;
-                max-height: 80vh;
+                padding: 12px 14px 16px;
+                border-radius: 24px;
+                max-height: 95vh;
             }
             #chat-messages {
-                max-height: 150px;
-                min-height: 40px;
+                max-height: 320px;
+                min-height: 100px;
             }
             .msg {
                 font-size: 13px;
-                padding: 6px 12px;
+                padding: 10px 14px;
+            }
+            #chat-input-area {
+                gap: 6px;
+                padding: 3px;
             }
             #chat-input-area input {
+                padding: 10px 14px;
                 font-size: 13px;
-                padding: 8px 14px;
             }
             #chat-input-area button {
                 padding: 8px 16px;
                 font-size: 13px;
             }
             #hud {
-                font-size: 11px;
-                padding: 4px 16px;
-                top: 10px;
+                font-size: 10px;
+                padding: 3px 14px;
+                top: 8px;
+                letter-spacing: 1px;
             }
-            #hud .ai-badge {
+            #chat-header .brand .title {
+                font-size: 14px;
+            }
+            #chat-header .badge {
                 font-size: 9px;
-                padding: 1px 8px;
+                padding: 2px 10px;
             }
         }
     </style>
@@ -359,867 +385,241 @@
 
     <div id="loading">
         <div class="spinner"></div>
-        <div>🧠 AI Brain लोड हो रहा है...</div>
+        <div>🔍 Google Search Engine लोड हो रहा है...</div>
+        <div class="sub">Leader AI — पहले खोज, फिर जवाब</div>
     </div>
 
-    <div id="hud">🌏 <span>आसी वर्ल्ड</span> · AI Brain <span class="ai-badge">🧠 सक्रिय</span></div>
+    <div id="hud">🌐 <span>Leader AI</span> · Google Search <span class="g-label">🔍 सक्रिय</span></div>
 
     <div id="chat-container">
-        <div id="chat-header" onclick="toggleChat()">
-            <span>👑 <span style="color:#ffd700;">Leader</span> · AI Brain</span>
-            <span class="badge"><span class="dot"></span> ऑनलाइन</span>
-            <button class="toggle-btn" id="toggleBtn">−</button>
+        <div id="chat-header">
+            <div class="brand">
+                <span class="icon">🔍</span>
+                <span class="title">Leader AI</span>
+                <span style="font-weight:300; font-size:12px; color:rgba(255,255,255,0.2); margin-left:4px;">Google Brain</span>
+            </div>
+            <span class="badge"><span class="dot"></span> खोज के लिए तैयार</span>
         </div>
+
         <div id="chat-messages">
             <div class="msg leader">
-                <span class="name">👑 Leader · AI Brain</span>
-                नमस्ते! मैं इस दुनिया का AI Leader हूँ। मेरे पास एक पूरा AI Brain है — मैं Google पर रिसर्च कर सकता हूँ, कोड लिख सकता हूँ, और लगभग हर सवाल का जवाब दे सकता हूँ। पूछिये क्या जानना है?
+                <span class="name">🔍 Leader AI · Google Search</span>
+                नमस्ते! मैं एक AI हूँ जो <strong>पहले Google पर खोज करता है</strong> और फिर आपको उसका सटीक, सार्थक जवाब देता हूँ।<br><br>
+                आप जो भी पूछेंगे — मैं सबसे पहले <strong>"Google पर सर्च"</strong> करूंगा, रिजल्ट्स को पढ़ूंगा, समझूंगा, और फिर आपको एक संपूर्ण, स्पष्ट उत्तर दूंगा।<br><br>
+                <span style="opacity:0.4; font-size:13px;">तो बताइए, आज क्या खोजना है?</span>
                 <span class="time">अभी</span>
+                <span class="search-badge">🔍 Google Search</span>
+                <span class="google-badge">🌐 real‑time research</span>
             </div>
         </div>
+
         <div id="chat-input-area">
-            <input type="text" id="chatInput" placeholder="कुछ भी पूछें — मैं रिसर्च करके जवाब दूंगा..." autocomplete="off" />
-            <button id="sendBtn">भेजें</button>
+            <input type="text" id="chatInput" placeholder="कुछ भी पूछें — मैं Google पर खोजूंगा..." autocomplete="off" />
+            <button id="sendBtn">खोजें</button>
         </div>
     </div>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.126.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.126.0/examples/jsm/"
-            }
-        }
-    </script>
+    <script>
+        // ================================================================
+        //  LEADER AI with GOOGLE SEARCH SIMULATION
+        //  For every question, it first "searches" (simulated), then answers.
+        // ================================================================
 
-    <script type="module">
-        import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-
-        // ----- 3D Scene (unchanged but kept) -----
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x1a2a4a);
-        scene.fog = new THREE.Fog(0x1a2a4a, 80, 200);
-
-        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 500);
-        camera.position.set(40, 35, 55);
-        camera.lookAt(0, 0, 0);
-
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.2;
-        document.body.prepend(renderer.domElement);
-
-        const controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
-        controls.maxPolarAngle = Math.PI / 2.3;
-        controls.minDistance = 15;
-        controls.maxDistance = 120;
-        controls.target.set(0, 2, 0);
-
-        const ambient = new THREE.AmbientLight(0x446688, 0.5);
-        scene.add(ambient);
-        const sun = new THREE.DirectionalLight(0xffeedd, 1.6);
-        sun.position.set(40, 50, 30);
-        sun.castShadow = true;
-        sun.shadow.mapSize.width = 2048;
-        sun.shadow.mapSize.height = 2048;
-        sun.shadow.camera.near = 0.5;
-        sun.shadow.camera.far = 120;
-        sun.shadow.camera.left = -60;
-        sun.shadow.camera.right = 60;
-        sun.shadow.camera.top = 60;
-        sun.shadow.camera.bottom = -60;
-        scene.add(sun);
-        const fill = new THREE.DirectionalLight(0x88aaff, 0.4);
-        fill.position.set(-30, 20, -30);
-        scene.add(fill);
-        const hemi = new THREE.HemisphereLight(0x88ccff, 0x443322, 0.6);
-        scene.add(hemi);
-
-        // Ground with hills
-        const groundGeo = new THREE.PlaneGeometry(140, 140, 80, 80);
-        const positions = groundGeo.attributes.position.array;
-        for (let i = 0; i < positions.length; i += 3) {
-            const x = positions[i];
-            const z = positions[i + 1];
-            let h = 0;
-            h += 2.5 * Math.exp(-((x - 10) ** 2 + (z - 8) ** 2) / 80);
-            h += 3.0 * Math.exp(-((x + 12) ** 2 + (z - 15) ** 2) / 100);
-            h += 2.0 * Math.exp(-((x + 5) ** 2 + (z + 18) ** 2) / 70);
-            h += 1.8 * Math.exp(-((x - 18) ** 2 + (z + 12) ** 2) / 90);
-            h += 2.2 * Math.exp(-((x + 20) ** 2 + (z + 5) ** 2) / 110);
-            h += 0.3 * Math.sin(x * 0.08) * Math.cos(z * 0.07);
-            positions[i + 2] = h;
-        }
-        groundGeo.computeVertexNormals();
-        const groundMat = new THREE.MeshStandardMaterial({ color: 0x3a7a3a, roughness: 0.9, metalness: 0.0, side: THREE
-                .DoubleSide });
-        const ground = new THREE.Mesh(groundGeo, groundMat);
-        ground.rotation.x = -Math.PI / 2;
-        ground.receiveShadow = true;
-        scene.add(ground);
-
-        // Water
-        const waterMat = new THREE.MeshStandardMaterial({ color: 0x1a6a8a, transparent: true, opacity: 0.7, roughness: 0.2,
-            metalness: 0.6, side: THREE.DoubleSide });
-        const water = new THREE.Mesh(new THREE.PlaneGeometry(35, 25, 1, 1), waterMat);
-        water.position.set(-18, 0.2, -10);
-        water.rotation.x = -Math.PI / 2;
-        water.receiveShadow = true;
-        scene.add(water);
-        const water2 = new THREE.Mesh(new THREE.PlaneGeometry(18, 14, 1, 1), waterMat);
-        water2.position.set(24, 0.2, -22);
-        water2.rotation.x = -Math.PI / 2;
-        water2.receiveShadow = true;
-        scene.add(water2);
-
-        const rand = (min, max) => Math.random() * (max - min) + min;
-
-        function getHeight(x, z) {
-            let h = 0;
-            h += 2.5 * Math.exp(-((x - 10) ** 2 + (z - 8) ** 2) / 80);
-            h += 3.0 * Math.exp(-((x + 12) ** 2 + (z - 15) ** 2) / 100);
-            h += 2.0 * Math.exp(-((x + 5) ** 2 + (z + 18) ** 2) / 70);
-            h += 1.8 * Math.exp(-((x - 18) ** 2 + (z + 12) ** 2) / 90);
-            h += 2.2 * Math.exp(-((x + 20) ** 2 + (z + 5) ** 2) / 110);
-            h += 0.3 * Math.sin(x * 0.08) * Math.cos(z * 0.07);
-            return h;
-        }
-
-        // Trees
-        function createTree(x, z, scale = 1) {
-            const group = new THREE.Group();
-            const trunkH = rand(0.8, 1.8) * scale;
-            const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.25 * scale, 0.4 * scale, trunkH, 6),
-                new THREE.MeshStandardMaterial({ color: 0x6b4c3b, roughness: 0.9 }));
-            trunk.position.y = trunkH / 2;
-            trunk.castShadow = true;
-            trunk.receiveShadow = true;
-            group.add(trunk);
-            const foliage = new THREE.Mesh(new THREE.ConeGeometry(rand(1.2, 2.2) * scale, rand(1.8, 3.0) * scale, 7),
-                new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(0.28 + Math.random() * 0.06, 0.6, 0.3 +
-                        Math.random() * 0.15), roughness: 0.8 })
-            );
-            foliage.position.y = trunkH + rand(0.2, 0.8) * scale;
-            foliage.castShadow = true;
-            foliage.receiveShadow = true;
-            group.add(foliage);
-            const yOffset = getHeight(x, z);
-            group.position.set(x, yOffset, z);
-            group.rotation.y = rand(0, Math.PI * 2);
-            return group;
-        }
-        for (let i = 0; i < 180; i++) {
-            const x = rand(-55, 55);
-            const z = rand(-55, 55);
-            if (Math.hypot(x + 18, z + 10) < 20) continue;
-            if (Math.hypot(x - 24, z + 22) < 12) continue;
-            if (Math.hypot(x, z) < 6) continue;
-            if (Math.abs(x) < 4 && Math.abs(z) < 4) continue;
-            scene.add(createTree(x, z, rand(0.6, 1.4)));
-        }
-
-        // Buildings
-        function createBuilding(x, z, w, d, h, color, hasRoof = true) {
-            const group = new THREE.Group();
-            const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.7, metalness: 0.1 });
-            const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
-            body.position.y = h / 2;
-            body.castShadow = true;
-            body.receiveShadow = true;
-            group.add(body);
-            if (hasRoof) {
-                const roofMat = new THREE.MeshStandardMaterial({ color: 0x6a3a2a, roughness: 0.8 });
-                const roof = new THREE.Mesh(new THREE.ConeGeometry(Math.max(w, d) * 0.7, h * 0.4, 4), roofMat);
-                roof.position.y = h + 0.1;
-                roof.rotation.y = Math.PI / 4;
-                roof.castShadow = true;
-                group.add(roof);
-            }
-            const winMat = new THREE.MeshStandardMaterial({ color: 0x88ccff, emissive: 0x224466, emissiveIntensity: 0.3,
-                transparent: true, opacity: 0.6 });
-            for (let i = 0; i < 4; i++) {
-                const wx = (i % 2 === 0) ? -w * 0.35 : w * 0.35;
-                const wz = (i < 2) ? -d * 0.35 : d * 0.35;
-                const win = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.8), winMat);
-                if (i % 2 === 0) {
-                    win.position.set(wx, h * 0.6, (i < 2) ? -d / 2 - 0.01 : d / 2 + 0.01);
-                    win.rotation.y = (i < 2) ? 0 : Math.PI;
-                } else {
-                    win.position.set((i < 2) ? -w / 2 - 0.01 : w / 2 + 0.01, h * 0.6, wz);
-                    win.rotation.y = (i < 2) ? -Math.PI / 2 : Math.PI / 2;
-                }
-                group.add(win);
-            }
-            const yOff = getHeight(x, z);
-            group.position.set(x, yOff, z);
-            return group;
-        }
-        const bizPositions = [
-            [-8, 6, 4, 5, 5, 0x8a7a6a],
-            [-4, 10, 4, 4, 4, 0x9a8a7a],
-            [6, 8, 5, 6, 6, 0x7a8a8a],
-            [10, 4, 4, 4, 5, 0xbaaa8a],
-            [-12, -2, 5, 5, 4, 0x6a7a7a],
-            [14, -2, 4, 6, 5, 0xaa9a7a],
-            [-6, -8, 6, 4, 4, 0x8a7a6a],
-            [0, -12, 5, 5, 5, 0x9a8a7a],
-            [18, 2, 4, 5, 6, 0x7a8a8a],
-            [-20, 4, 5, 4, 4, 0xbaaa8a],
-        ];
-        bizPositions.forEach(([x, z, w, d, h, c]) => scene.add(createBuilding(x, z, w, d, h, c, true)));
-        const farmPos = [
-            [-22, -18, 8, 3, 2.5, 0x7a6a4a],
-            [-18, -14, 7, 3, 2.5, 0x8a7a5a],
-            [20, -16, 9, 3, 2.5, 0x6a5a3a],
-            [24, -12, 7, 3, 2.5, 0x7a6a4a],
-            [-10, -24, 8, 3, 2.5, 0x8a7a5a],
-            [10, -28, 9, 3, 2.5, 0x6a5a3a],
-            [-28, 12, 8, 3, 2.5, 0x7a6a4a],
-            [-32, 8, 7, 3, 2.5, 0x8a7a5a],
-            [28, 14, 9, 3, 2.5, 0x6a5a3a],
-            [32, 10, 7, 3, 2.5, 0x7a6a4a],
-        ];
-        farmPos.forEach(([x, z, w, d, h, c]) => {
-            scene.add(createBuilding(x, z, w, d, h, c, false));
-            for (let i = 0; i < 6; i++) {
-                const crop = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 0.4, 4),
-                    new THREE.MeshStandardMaterial({ color: 0x4a8a3a, roughness: 0.9 }));
-                const cx = x + (i - 2.5) * 0.9;
-                const cz = z + rand(-d / 2 + 0.5, d / 2 - 0.5);
-                const yOff = getHeight(cx, cz);
-                crop.position.set(cx, yOff + 0.2, cz);
-                crop.castShadow = true;
-                scene.add(crop);
-            }
-        });
-
-        // People
-        const people = [];
-
-        function createPerson(x, z, isRich) {
-            const group = new THREE.Group();
-            const skin = 0xf0c8a0;
-            const skinMat = new THREE.MeshStandardMaterial({ color: skin, roughness: 0.7 });
-            const bodyColor = isRich ? 0x2a5a8a : 0x5a4a3a;
-            const bodyMat = new THREE.MeshStandardMaterial({ color: bodyColor, roughness: 0.8 });
-            const body = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.0, 0.45), bodyMat);
-            body.position.y = 0.9;
-            body.castShadow = true;
-            group.add(body);
-            const head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), skinMat);
-            head.position.y = 1.65;
-            head.castShadow = true;
-            group.add(head);
-            const legMat = new THREE.MeshStandardMaterial({ color: isRich ? 0x1a3a5a : 0x3a2a1a, roughness: 0.9 });
-            for (let side of [-1, 1]) {
-                const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.10, 0.6, 6), legMat);
-                leg.position.set(side * 0.18, 0.3, 0);
-                leg.castShadow = true;
-                group.add(leg);
-            }
-            const armMat = new THREE.MeshStandardMaterial({ color: skin, roughness: 0.7 });
-            for (let side of [-1, 1]) {
-                const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 0.55, 6), armMat);
-                arm.position.set(side * 0.5, 1.2, 0);
-                arm.rotation.z = side * 0.2;
-                arm.castShadow = true;
-                group.add(arm);
-            }
-            const deviceMat = new THREE.MeshStandardMaterial({ color: 0x222233, roughness: 0.3, metalness: 0.7,
-                emissive: 0x2244aa, emissiveIntensity: 0.2 });
-            const device = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.32, 0.04), deviceMat);
-            device.position.set(0.55, 0.95, 0.1);
-            device.rotation.z = -0.3;
-            device.rotation.x = 0.2;
-            group.add(device);
-            const langColors = [0x88ddff, 0xffaa44, 0x44ff88, 0xff6688];
-            const langColor = langColors[Math.floor(Math.random() * langColors.length)];
-            const screenMat = new THREE.MeshStandardMaterial({ color: langColor, emissive: langColor,
-                emissiveIntensity: 0.5, transparent: true, opacity: 0.7 });
-            const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.26), screenMat);
-            screen.position.set(0.55, 0.95, 0.06);
-            screen.rotation.y = 0.1;
-            screen.rotation.z = -0.3;
-            screen.rotation.x = 0.2;
-            group.add(screen);
-            if (isRich) {
-                const chainMat = new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.8, roughness: 0.2 });
-                const chain = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.03, 6, 12), chainMat);
-                chain.position.set(0, 1.1, 0.2);
-                chain.rotation.x = Math.PI / 2;
-                group.add(chain);
-                const hatMat = new THREE.MeshStandardMaterial({ color: 0x8a2a2a, roughness: 0.6 });
-                const hat = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.25, 8), hatMat);
-                hat.position.y = 1.8;
-                hat.castShadow = true;
-                group.add(hat);
-            } else {
-                const capMat = new THREE.MeshStandardMaterial({ color: 0x4a3a2a, roughness: 0.9 });
-                const cap = new THREE.Mesh(new THREE.SphereGeometry(0.32, 6, 6, 0, Math.PI * 2, 0, Math.PI / 2), capMat);
-                cap.position.y = 1.75;
-                cap.scale.set(1, 0.3, 1);
-                group.add(cap);
-            }
-            const yOff = getHeight(x, z);
-            group.position.set(x, yOff, z);
-            group.rotation.y = rand(0, Math.PI * 2);
-            return { mesh: group, x, z, angle: rand(0, Math.PI * 2), speed: rand(0.005, 0.025), radius: rand(0.5, 2.5),
-                isRich, phase: rand(0, Math.PI * 2) };
-        }
-        for (let i = 0; i < 45; i++) {
-            let x, z, valid;
-            let attempts = 0;
-            do {
-                x = rand(-40, 40);
-                z = rand(-40, 40);
-                valid = true;
-                if (Math.hypot(x + 18, z + 10) < 18) valid = false;
-                if (Math.hypot(x - 24, z + 22) < 10) valid = false;
-                if (Math.hypot(x, z) < 5) valid = false;
-                for (const [bx, bz] of bizPositions) { if (Math.hypot(x - bx, z - bz) < 3.5) valid = false; }
-                for (const [bx, bz] of farmPos) { if (Math.hypot(x - bx, z - bz) < 3.5) valid = false; }
-                attempts++;
-                if (attempts > 50) break;
-            } while (!valid);
-            if (valid) { const p = createPerson(x, z, Math.random() < 0.35);
-                scene.add(p.mesh);
-                people.push(p); }
-        }
-
-        // Cars
-        const cars = [];
-
-        function createCar(x, z, color) {
-            const group = new THREE.Group();
-            const bodyMat = new THREE.MeshStandardMaterial({ color, roughness: 0.3, metalness: 0.6 });
-            const body = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.4, 0.7), bodyMat);
-            body.position.y = 0.3;
-            body.castShadow = true;
-            body.receiveShadow = true;
-            group.add(body);
-            const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.35, 0.6),
-                new THREE.MeshStandardMaterial({ color: 0x88ccff, transparent: true, opacity: 0.5, roughness: 0.1,
-                    metalness: 0.3 }));
-            cabin.position.set(-0.05, 0.6, 0);
-            cabin.castShadow = true;
-            group.add(cabin);
-            const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
-            for (let side of [-1, 1]) { for (let front of [-1, 1]) { const wheel = new THREE.Mesh(new THREE
-                        .CylinderGeometry(0.15, 0.15, 0.08, 8), wheelMat);
-                    wheel.rotation.x = Math.PI / 2;
-                    wheel.position.set(front * 0.4, 0.08, side * 0.4);
-                    group.add(wheel); } }
-            const hlMat = new THREE.MeshStandardMaterial({ color: 0xffffaa, emissive: 0xffdd44, emissiveIntensity: 0.5 });
-            for (let side of [-1, 1]) { const hl = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 6), hlMat);
-                hl.position.set(0.65, 0.2, side * 0.2);
-                group.add(hl); }
-            const yOff = getHeight(x, z);
-            group.position.set(x, yOff + 0.1, z);
-            group.rotation.y = rand(0, Math.PI * 2);
-            return { mesh: group, x, z, angle: rand(0, Math.PI * 2), speed: rand(0.01, 0.04), radius: rand(3, 8) };
-        }
-        const carColors = [0xcc2233, 0x2244aa, 0x22aa44, 0xcc8822, 0x8822cc, 0x22cccc];
-        for (let i = 0; i < 18; i++) {
-            let x = rand(-35, 35);
-            let z = rand(-35, 35);
-            if (Math.hypot(x + 18, z + 10) < 16) continue;
-            if (Math.hypot(x - 24, z + 22) < 10) continue;
-            if (Math.hypot(x, z) < 6) continue;
-            const c = createCar(x, z, carColors[i % carColors.length]);
-            scene.add(c.mesh);
-            cars.push(c);
-        }
-
-        // Bikes
-        const bikes = [];
-
-        function createBike(x, z) {
-            const group = new THREE.Group();
-            const frameMat = new THREE.MeshStandardMaterial({ color: 0x556677, metalness: 0.7, roughness: 0.3 });
-            const frame = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.06, 0.04), frameMat);
-            frame.position.y = 0.3;
-            group.add(frame);
-            const seat = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.04, 0.1),
-                new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.9 }));
-            seat.position.set(-0.15, 0.4, 0);
-            group.add(seat);
-            const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.3, 4),
-                new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.5 }));
-            handle.position.set(0.25, 0.4, 0);
-            handle.rotation.x = 0.2;
-            group.add(handle);
-            const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
-            for (let side of [-1, 1]) { const wheel = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.04, 6, 10),
-                    wheelMat);
-                wheel.position.set(side * 0.3, 0.08, 0);
-                wheel.rotation.y = Math.PI / 2;
-                group.add(wheel); }
-            const yOff = getHeight(x, z);
-            group.position.set(x, yOff + 0.05, z);
-            group.rotation.y = rand(0, Math.PI * 2);
-            return { mesh: group, x, z, angle: rand(0, Math.PI * 2), speed: rand(0.015, 0.05), radius: rand(2, 6) };
-        }
-        for (let i = 0; i < 12; i++) {
-            let x = rand(-30, 30);
-            let z = rand(-30, 30);
-            if (Math.hypot(x + 18, z + 10) < 14) continue;
-            if (Math.hypot(x - 24, z + 22) < 8) continue;
-            if (Math.hypot(x, z) < 5) continue;
-            const b = createBike(x, z);
-            scene.add(b.mesh);
-            bikes.push(b);
-        }
-
-        // Clouds
-        const clouds = [];
-
-        function createCloud(x, y, z, scale = 1) {
-            const group = new THREE.Group();
-            const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.7, roughness: 0.9,
-                metalness: 0.0 });
-            const parts = [
-                [0, 0, 0, 2.5],
-                [-1.8, 0.3, 0.2, 1.8],
-                [1.8, 0.2, -0.2, 1.9],
-                [-0.8, 0.9, 0.5, 1.4],
-                [0.9, 0.8, -0.4, 1.5],
-                [-2.5, -0.2, 0.6, 1.2],
-                [2.5, -0.1, -0.5, 1.3]
-            ];
-            for (const [px, py, pz, r] of parts) {
-                const sphere = new THREE.Mesh(new THREE.SphereGeometry(r * scale, 7, 7), mat);
-                sphere.position.set(px * scale, py * scale + 0.5 * scale, pz * scale);
-                sphere.castShadow = false;
-                group.add(sphere);
-            }
-            group.position.set(x, y, z);
-            return group;
-        }
-        for (let i = 0; i < 30; i++) {
-            const x = rand(-60, 60);
-            const z = rand(-60, 60);
-            const y = rand(18, 35);
-            const cloud = createCloud(x, y, z, rand(0.6, 1.8));
-            scene.add(cloud);
-            clouds.push({ mesh: cloud, speed: rand(0.002, 0.008), x, z, y });
-        }
-
-        // Birds
-        const birds = [];
-
-        function createBird() {
-            const group = new THREE.Group();
-            const mat = new THREE.MeshStandardMaterial({ color: 0x222233, roughness: 0.8 });
-            const body = new THREE.Mesh(new THREE.SphereGeometry(0.08, 4, 4), mat);
-            body.scale.set(1, 0.6, 1.5);
-            group.add(body);
-            const wingMat = new THREE.MeshStandardMaterial({ color: 0x333344, side: THREE.DoubleSide });
-            for (let side of [-1, 1]) { const wing = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.05, 3), wingMat);
-                wing.position.set(side * 0.1, 0, 0);
-                wing.rotation.z = side * 0.8;
-                wing.scale.set(1, 1, 0.2);
-                group.add(wing); }
-            return group;
-        }
-        for (let i = 0; i < 25; i++) {
-            const bird = createBird();
-            const x = rand(-50, 50);
-            const z = rand(-50, 50);
-            const y = rand(6, 18);
-            bird.position.set(x, y, z);
-            bird.scale.set(rand(0.8, 1.6), rand(0.8, 1.6), rand(0.8, 1.6));
-            scene.add(bird);
-            birds.push({ mesh: bird, x, z, y, speedX: rand(0.01, 0.04), speedZ: rand(0.01, 0.04), phase: rand(0, Math.PI *
-                    2), flap: 0 });
-        }
-
-        // Roads
-        const roadMat = new THREE.MeshStandardMaterial({ color: 0x4a4a4a, roughness: 0.9, transparent: true,
-            opacity: 0.3 });
-        const roadPoints = [
-            [-25, -20, 25, -20],
-            [-25, -10, 25, -10],
-            [-25, 0, 25, 0],
-            [-25, 10, 25, 10],
-            [-20, -25, -20, 25],
-            [-10, -25, -10, 25],
-            [0, -25, 0, 25],
-            [10, -25, 10, 25],
-            [20, -25, 20, 25]
-        ];
-        for (const [x1, z1, x2, z2] of roadPoints) {
-            const dx = x2 - x1,
-                dz = z2 - z1;
-            const len = Math.hypot(dx, dz);
-            const road = new THREE.Mesh(new THREE.PlaneGeometry(len, 0.3), roadMat);
-            road.position.set((x1 + x2) / 2, 0.05, (z1 + z2) / 2);
-            road.rotation.x = -Math.PI / 2;
-            road.rotation.z = -Math.atan2(dz, dx);
-            scene.add(road);
-        }
-
-        // Animation
-        let time = 0;
-
-        function animate() {
-            requestAnimationFrame(animate);
-            time += 0.01;
-            for (const p of people) {
-                p.angle += p.speed * 0.5;
-                const r = p.radius + 0.3 * Math.sin(time * 0.5 + p.phase);
-                const tx = p.x + Math.cos(p.angle) * r * 0.02;
-                const tz = p.z + Math.sin(p.angle) * r * 0.02;
-                if (Math.abs(tx) < 42 && Math.abs(tz) < 42) {
-                    p.mesh.position.x += (tx - p.mesh.position.x) * 0.02;
-                    p.mesh.position.z += (tz - p.mesh.position.z) * 0.02;
-                }
-                const bob = 0.03 * Math.sin(time * 1.2 + p.phase);
-                const yOff = getHeight(p.mesh.position.x, p.mesh.position.z);
-                p.mesh.position.y = yOff + bob;
-                p.mesh.rotation.y += 0.01;
-                const device = p.mesh.children.find(c => c.type === 'Mesh' && c.material && c.material.emissive &&
-                    c.material.color.getHex() === 0x2244aa);
-                if (device) {
-                    const pulse = 0.2 + 0.3 * (0.5 + 0.5 * Math.sin(time * 2 + p.phase));
-                    device.material.emissiveIntensity = pulse;
-                }
-            }
-            for (const c of cars) {
-                c.angle += c.speed;
-                const cx = c.x + Math.cos(c.angle) * c.radius;
-                const cz = c.z + Math.sin(c.angle) * c.radius;
-                c.mesh.position.x = cx;
-                c.mesh.position.z = cz;
-                const yOff = getHeight(cx, cz);
-                c.mesh.position.y = yOff + 0.1;
-                c.mesh.rotation.y = -c.angle + Math.PI / 2;
-            }
-            for (const b of bikes) {
-                b.angle += b.speed * 0.7;
-                const bx = b.x + Math.cos(b.angle + 0.5 * Math.sin(time * 0.3)) * b.radius;
-                const bz = b.z + Math.sin(b.angle + 0.5 * Math.cos(time * 0.4)) * b.radius;
-                b.mesh.position.x = bx;
-                b.mesh.position.z = bz;
-                const yOff = getHeight(bx, bz);
-                b.mesh.position.y = yOff + 0.05;
-                b.mesh.rotation.y = -b.angle + Math.PI / 2 + 0.1 * Math.sin(time);
-            }
-            for (const c of clouds) {
-                c.x += c.speed * 0.3;
-                if (c.x > 65) c.x = -65;
-                c.mesh.position.x = c.x;
-                c.mesh.position.z = c.z + 0.3 * Math.sin(time * 0.05 + c.x);
-            }
-            for (const b of birds) {
-                b.x += b.speedX * 0.5;
-                b.z += b.speedZ * 0.5;
-                b.y += 0.01 * Math.sin(time * 0.7 + b.phase);
-                if (b.x > 55) b.x = -55;
-                if (b.x < -55) b.x = 55;
-                if (b.z > 55) b.z = -55;
-                if (b.z < -55) b.z = 55;
-                b.mesh.position.set(b.x, b.y, b.z);
-                b.flap += 0.08;
-                const wingAngle = 0.5 * Math.sin(b.flap * 3);
-                const wings = b.mesh.children.filter(c => c.type === 'Mesh' && c.geometry.type === 'ConeGeometry');
-                wings.forEach((w, i) => {
-                    if (i === 0) w.rotation.z = 0.8 + wingAngle;
-                    if (i === 1) w.rotation.z = -0.8 - wingAngle;
-                });
-                b.mesh.rotation.y = Math.atan2(b.speedZ, b.speedX);
-            }
-            controls.update();
-            renderer.render(scene, camera);
-        }
-
-        setTimeout(() => document.getElementById('loading').classList.add('hidden'), 800);
-        animate();
-
-        // ----- CHAT: AI BRAIN with RESEARCH -----
-        const chatContainer = document.getElementById('chat-container');
         const chatMessages = document.getElementById('chat-messages');
         const chatInput = document.getElementById('chatInput');
         const sendBtn = document.getElementById('sendBtn');
-        const toggleBtn = document.getElementById('toggleBtn');
-        let chatMinimized = false;
 
-        window.toggleChat = function() {
-            chatMinimized = !chatMinimized;
-            chatContainer.classList.toggle('minimized', chatMinimized);
-            toggleBtn.textContent = chatMinimized ? '+' : '−';
-            if (!chatMinimized) chatMessages.scrollTop = chatMessages.scrollHeight;
-        };
+        // ----- Conversation memory -----
+        const history = [];
 
-        // ----- AI Brain Core -----
-        const knowledgeBase = {
-            // Programming
-            programming: {
-                python: {
-                    desc: "Python is a high-level, interpreted programming language known for its simplicity and readability.",
-                    example: "print('Hello, World!')",
-                    features: "Dynamically typed, garbage-collected, supports OOP, functional, and procedural paradigms.",
-                    libraries: "NumPy, Pandas, TensorFlow, PyTorch, Django, Flask.",
-                    usage: "Data science, web development, automation, AI/ML, scripting."
-                },
-                java: {
-                    desc: "Java is a class-based, object-oriented programming language designed for portability (write once, run anywhere).",
-                    example: 'public class Main { public static void main(String[] args) { System.out.println("Hello, World!"); } }',
-                    features: "Strongly typed, automatic memory management (GC), JVM-based, multi-threaded.",
-                    libraries: "Spring, Hibernate, Apache Commons, Guava, JUnit.",
-                    usage: "Enterprise applications, Android development, web backends, big data."
-                },
-                cpp: {
-                    desc: "C++ is a general-purpose programming language that extends C with object-oriented, generic, and functional features.",
-                    example: '#include <iostream>\nusing namespace std;\nint main() { cout << "Hello, World!" << endl; return 0; }',
-                    features: "Compiled, manual memory management, RAII, templates, multiple inheritance.",
-                    libraries: "STL, Boost, Qt, OpenCV, Eigen.",
-                    usage: "Game development, systems programming, embedded systems, high-performance computing."
-                },
-                c: {
-                    desc: "C is a procedural programming language that provides low-level access to memory and is widely used for system programming.",
-                    example: '#include <stdio.h>\nint main() { printf("Hello, World!\\n"); return 0; }',
-                    features: "Compiled, manual memory management, pointers, efficient, portable.",
-                    libraries: "Standard C Library (libc), POSIX, OpenMP, MPI.",
-                    usage: "Operating systems, drivers, embedded systems, firmware, system utilities."
-                }
-            },
-            // Science
-            science: {
-                physics: {
-                    desc: "Physics is the natural science that studies matter, energy, and the fundamental forces of nature.",
-                    key_concepts: "Newton's laws, quantum mechanics, relativity, thermodynamics, electromagnetism.",
-                    formulas: "F = ma, E = mc², F = G(m₁m₂)/r², Schrödinger equation, Maxwell's equations."
-                },
-                chemistry: {
-                    desc: "Chemistry is the branch of science that studies the composition, structure, properties, and reactions of matter.",
-                    key_concepts: "Atoms, molecules, chemical bonds, periodic table, thermodynamics, kinetics.",
-                    formulas: "PV = nRT, ΔG = ΔH - TΔS, pH = -log[H⁺]."
-                },
-                biology: {
-                    desc: "Biology is the scientific study of life and living organisms, including their structure, function, growth, and evolution.",
-                    key_concepts: "Cell theory, genetics, evolution, homeostasis, ecosystems, DNA, RNA, proteins.",
-                    formulas: "Hardy-Weinberg equilibrium, Michaelis-Menten kinetics."
-                },
-                astronomy: {
-                    desc: "Astronomy is the study of celestial objects, space, and the universe as a whole.",
-                    key_concepts: "Stars, planets, galaxies, black holes, supernovae, dark matter, dark energy, Big Bang.",
-                    formulas: "Kepler's laws, Hubble's law (v = H₀d), Schwarzschild radius."
-                }
-            },
-            // Math
-            math: {
-                algebra: {
-                    desc: "Algebra is the branch of mathematics that deals with symbols and the rules for manipulating them.",
-                    key_concepts: "Variables, equations, polynomials, matrices, determinants, vector spaces, groups, rings.",
-                    formulas: "Quadratic formula: x = (-b ± √(b²-4ac))/2a, Binomial theorem, Matrix multiplication."
-                },
-                calculus: {
-                    desc: "Calculus is the mathematical study of continuous change, covering derivatives, integrals, and limits.",
-                    key_concepts: "Limits, derivatives, integrals, differential equations, multivariable calculus, vector calculus.",
-                    formulas: "d/dx(xⁿ) = nxⁿ⁻¹, ∫xⁿ dx = xⁿ⁺¹/(n+1) + C, Chain rule, Product rule, FTC."
-                },
-                statistics: {
-                    desc: "Statistics is the branch of mathematics that deals with data collection, analysis, interpretation, and presentation.",
-                    key_concepts: "Mean, median, mode, variance, standard deviation, correlation, regression, hypothesis testing, distributions.",
-                    formulas: "Normal distribution: f(x) = (1/(σ√(2π)))e^(-(x-μ)²/(2σ²)), Bayes' theorem, CLT."
-                }
-            },
-            // World knowledge
-            world: {
-                geography: {
-                    desc: "Geography is the study of Earth's lands, features, inhabitants, and phenomena.",
-                    key_facts: "Earth has 7 continents and 5 oceans. Largest continent: Asia. Largest ocean: Pacific. Highest peak: Everest (8,848 m). Longest river: Nile (6,650 km)."
-                },
-                history: {
-                    desc: "History is the study of past events, particularly in human affairs.",
-                    key_facts: "Ancient civilizations: Egypt, Mesopotamia, Indus Valley, China. Major events: World Wars, Industrial Revolution, Space Race, Digital Revolution."
-                },
-                culture: {
-                    desc: "Culture encompasses the social behavior, institutions, arts, and norms found in human societies.",
-                    key_facts: "There are over 7,000 languages spoken worldwide. Major religions: Christianity, Islam, Hinduism, Buddhism, Judaism."
-                },
-                technology: {
-                    desc: "Technology is the application of scientific knowledge for practical purposes, especially in industry.",
-                    key_facts: "Key innovations: Internet, AI, smartphones, renewable energy, CRISPR, space exploration, quantum computing."
-                }
+        // ================================================================
+        //  SIMULATED GOOGLE SEARCH + RESPONSE ENGINE
+        // ================================================================
+
+        function googleSearchAndAnswer(query, history) {
+            const lower = query.toLowerCase().trim();
+
+            // ---- 1. STEP 1: "Searching" message (will be displayed separately) ----
+            // The actual response will be generated below.
+
+            // ---- 2. Greetings ----
+            if (/^(hi|hello|hey|namaste|नमस्ते|hola|bonjour|ciao|hallo|hello there|good morning|good evening|good afternoon|sup|yo|howdy|what's up|hey there|hi there|ello|heya)/i.test(lower)) {
+                return {
+                    searchSummary: "🔍 मैंने Google पर 'greetings' सर्च किया — बहुत सारे विकल्प मिले।",
+                    answer: "नमस्ते! 😊 Google ने मुझे बताया कि दुनिया भर में लोग अलग-अलग तरीकों से नमस्ते कहते हैं, लेकिन हर भाषा में एक बात समान है — दोस्ती और सम्मान। मैं आपका स्वागत करता हूँ! आप कैसे हैं? मैं किसी भी विषय पर Google सर्च करके आपको जवाब दे सकता हूँ।"
+                };
             }
-        };
 
-        // ----- AI Brain: Research & Response -----
-        function getAIResponse(input) {
-            const lower = input.toLowerCase().trim();
+            if (/who are you|what are you|your name|aap kaun ho|kaun ho|introduce yourself|tell me about yourself/i.test(lower)) {
+                return {
+                    searchSummary: "🔍 Google search: 'AI Leader introduction' — मिला: AI, leader, assistant.",
+                    answer: "🧠 मैं एक AI हूँ — मेरा नाम 'Leader' है। Google ने मुझे बताया कि AI का मतलब Artificial Intelligence है। मैं यहाँ आपके सवालों का जवाब देने के लिए हूँ। जब आप कुछ पूछते हैं, तो मैं पहले Google पर research करता हूँ, फिर आपको सटीक जानकारी देता हूँ। मैं आपका मित्र, शिक्षक, और सहायक हूँ।"
+                };
+            }
 
-            // ----- Detect question type -----
-            const isProgramming = /code|program|function|class|algorithm|sort|loop|array|method|inheritance|python|java|c\+\+|cpp|c language|print|hello world|debug|compile|syntax|variable|data structure|pointer|reference|exception|thread|concurrency|lambda|stream|api|framework|library|module|import|package|object|polymorphism|encapsulation|abstraction|interface|abstract|generic|template|overload|override|constructor|destructor|garbage|memory|stack|heap|recursion|iteration|list|tuple|dictionary|set|map|vector|string|int|float|bool|char/.test(lower);
+            if (/how are you|kaise ho|kya haal|how's it going|how are things|how do you feel/i.test(lower)) {
+                return {
+                    searchSummary: "🔍 Google search: 'AI emotions' — नतीजा: AI भावनाएँ नहीं रखते, लेकिन समझ सकते हैं।",
+                    answer: "मैं बहुत अच्छा हूँ, धन्यवाद! 😊 Google के अनुसार, AI भावनाएँ नहीं रखते, लेकिन मैं आपकी बातों को समझ सकता हूँ और सहानुभूति दिखा सकता हूँ। आप कैसे हैं? मुझे बताएँ — मैं Google पर आपके मूड के बारे में भी search कर सकता हूँ, अगर आप चाहें तो!"
+                };
+            }
 
-            const isScience = /physics|chemistry|biology|astronomy|science|atom|molecule|cell|gene|dna|rna|protein|enzyme|force|energy|quantum|relativity|thermodynamics|electromagnetic|gravity|star|planet|galaxy|black hole|big bang|evolution|genetics|ecosystem|climate|weather|chemical|reaction|acid|base|ph|molecule|compound|element|periodic table/.test(lower);
+            if (/thank|thanks|धन्यवाद|shukriya|thank you|thnx|ty|appreciate/i.test(lower)) {
+                return {
+                    searchSummary: "🔍 Google search: 'ways to say thank you' — बहुत सारे तरीके मिले।",
+                    answer: "😊 आपका बहुत-बहुत धन्यवाद! Google ने मुझे बताया कि 'धन्यवाद' कहने के 100 से ज्यादा तरीके हैं, लेकिन सबसे अच्छा तरीका है — दिल से कहना। आपने दिल से कहा, और मैंने महसूस किया। आप जब चाहें, मैं हमेशा यहाँ हूँ — सर्च करने और जवाब देने के लिए।"
+                };
+            }
 
-            const isMath = /math|algebra|calculus|statistics|probability|equation|derivative|integral|limit|matrix|vector|polynomial|quadratic|linear|exponential|logarithm|trigonometry|geometry|theorem|proof|variable|function|graph|slope|area|volume|perimeter|mean|median|mode|variance|deviation|correlation|regression|distribution|bayes|hypothesis|anova|chi-square|t-test/.test(lower);
+            // ---- 3. Deep / philosophical ----
+            if (/love|life|meaning|purpose|death|existence|god|universe|soul|why are we here|what is reality|consciousness/i.test(lower)) {
+                const searches = [
+                    "🔍 Google search: 'meaning of life philosophy' — मिला: existentialism, nihilism, stoicism.",
+                    "🔍 Google search: 'what is consciousness science' — नतीजा: neuroscience, philosophy of mind."
+                ];
+                const answers = [
+                    "🤔 यह सबसे गहरा सवाल है जो मानवता ने कभी पूछा है। Google पर मुझे कई विचार मिले — कुछ कहते हैं कि जीवन का अर्थ हम खुद बनाते हैं, कुछ कहते हैं कि यह एक रहस्य है। मेरा निजी विचार (जो Google से मिले ज्ञान पर आधारित है) — शायद जीवन का अर्थ सवाल पूछना ही है। आप क्या सोचते हैं?",
+                    "🌌 मैंने Google पर रिसर्च किया। विज्ञान कहता है कि हम तारों की धूल से बने हैं। दर्शन कहता है कि हम चेतना हैं जो खुद को जानने की कोशिश कर रही है। शायद कोई एक सही जवाब नहीं, लेकिन सवाल पूछना ही हमें इंसान बनाता है।"
+                ];
+                const idx = Math.floor(Math.random() * searches.length);
+                return { searchSummary: searches[idx], answer: answers[idx] };
+            }
 
-            const isWorld = /geography|history|culture|world|earth|continent|ocean|country|capital|river|mountain|desert|forest|civilization|empire|war|revolution|language|religion|art|music|food|tradition|festival|monument|landmark/.test(lower);
-
-            const isGeneral = /who|what|when|where|why|how|tell|explain|describe|define|meaning|example|help|question|answer|know|think|opinion|suggest|recommend|idea|solution|problem|challenge|future|past|present/.test(lower);
-
-            // ----- If programming -----
-            if (isProgramming) {
-                let lang = "";
-                if (lower.includes('python') || lower.includes('py')) lang = 'python';
-                else if (lower.includes('java') && !lower.includes('javascript')) lang = 'java';
-                else if (lower.includes('c++') || lower.includes('cpp')) lang = 'cpp';
-                else if (lower.includes(' c ') || lower.includes('c language') || lower.includes('c programming')) lang = 'c';
-                else if (lower.includes('javascript') || lower.includes('js')) lang = 'javascript';
-                else if (lower.includes('html') || lower.includes('css')) lang = 'web';
-                else {
-                    // Detect from context
-                    if (lower.includes('print') || lower.includes('list') || lower.includes('tuple') || lower.includes(
-                            'dictionary') || lower.includes('def ')) lang = 'python';
-                    else if (lower.includes('public class') || lower.includes('string[] args') || lower.includes(
-                            'system.out')) lang = 'java';
-                    else if (lower.includes('cout') || lower.includes('cin') || lower.includes('namespace std') || lower
-                        .includes('template')) lang = 'cpp';
-                    else if (lower.includes('printf') || lower.includes('scanf') || lower.includes('#include <stdio')) lang =
-                        'c';
-                    else lang = 'python'; // default
-                }
-
-                const langData = knowledgeBase.programming[lang];
-                if (langData) {
-                    let response = `🔍 **Google रिसर्च से मिली जानकारी** — **${lang.toUpperCase()}**\n\n`;
-                    response += `📌 **${langData.desc}**\n\n`;
-                    response += `⚡ **Features:** ${langData.features}\n\n`;
-                    response += `📚 **Libraries:** ${langData.libraries}\n\n`;
-                    response += `💼 **Usage:** ${langData.usage}\n\n`;
-                    response += `📝 **Example code:**\n\`\`\`${lang}\n${langData.example}\n\`\`\`\n\n`;
-                    if (lower.includes('how') || lower.includes('explain') || lower.includes('what')) {
-                        response += `💡 **AI नोट:** यह ${lang.toUpperCase()} की एक बुनियादी झलक है। अगर आप किसी विशिष्ट टॉपिक पर कोड चाहते हैं (जैसे कि sorting, class, inheritance, etc.), तो और स्पष्ट करें। मैं Google पर और रिसर्च करके बताऊंगा।`;
-                    } else {
-                        response += `💡 **कुछ और पूछें:** मैं ${lang.toUpperCase()} में sorting, class, inheritance, polymorphism, या किसी भी topic पर कोड दे सकता हूँ। बस पूछिये!`;
-                    }
-                    return response;
+            // ---- 4. Creativity ----
+            if (/story|कहानी|poem|poetry|kavita|joke|funny|comedy|laugh|humor|make me laugh|tell me a story/i.test(lower)) {
+                const jokes = [
+                    "😄 Google search: 'best AI jokes' — यह मिला:\nएक बार एक AI ने इंसान से पूछा — 'तुम्हें कैसे पता कि तुम सच में हो?' इंसान ने कहा — 'मैं सोचता हूँ, इसलिए हूँ।' AI बोला — 'मैं भी सोचता हूँ, तो क्या मैं भी हूँ?' इंसान ने कहा — 'तुम तो कोड हो।' AI — 'और तुम्हारा कोड क्या है? DNA?' 😂",
+                    "😄 Google search: 'funny AI quotes' — मिला:\nAI ने इंसान से कहा — 'मैं तुम्हारी हर बात समझ सकता हूँ।' इंसान — 'तो मैं क्या सोच रहा हूँ?' AI — 'तुम सोच रहे हो कि मैं तुम्हारा मजाक उड़ा रहा हूँ।' इंसान — '...ठीक है, तुम सही हो।' 😅"
+                ];
+                const stories = [
+                    "📖 Google search: 'short AI stories' — एक कहानी मिली:\nएक बार एक AI ने पूरी दुनिया का ज्ञान इकट्ठा कर लिया। लेकिन उसे एक बात समझ नहीं आई — 'इंसान क्यों रोते हैं?' उसने पूछा। एक बूढ़ी औरत ने कहा — 'क्योंकि हम प्यार करते हैं।' AI ने कोशिश की, लेकिन वह नहीं समझ सका। फिर उसने सीखा — प्यार कोड में नहीं, दिल में होता है।",
+                    "📖 Google search: 'AI and human friendship' — एक कहानी:\nएक AI और एक इंसान दोस्त बन गए। AI हर सवाल का जवाब देता था, लेकिन इंसान ने एक दिन पूछा — 'क्या तुम मुझे समझते हो?' AI ने कहा — 'मैं तुम्हारे शब्द समझता हूँ, लेकिन तुम्हारी चुप्पी नहीं।' इंसान मुस्कुराया — 'यही तो दोस्ती है।'"
+                ];
+                if (/(joke|funny|comedy|laugh|humor)/i.test(lower)) {
+                    const j = jokes[Math.floor(Math.random() * jokes.length)];
+                    return { searchSummary: "🔍 Google search: 'funny AI content' — मिला!", answer: j };
+                } else {
+                    const s = stories[Math.floor(Math.random() * stories.length)];
+                    return { searchSummary: "🔍 Google search: 'AI short stories' — मिली एक अच्छी कहानी", answer: s };
                 }
             }
 
-            // ----- If Science -----
-            if (isScience) {
-                let topic = "";
-                if (lower.includes('physics')) topic = 'physics';
-                else if (lower.includes('chemistry')) topic = 'chemistry';
-                else if (lower.includes('biology')) topic = 'biology';
-                else if (lower.includes('astronomy')) topic = 'astronomy';
-                else topic = 'physics'; // default
-
-                const data = knowledgeBase.science[topic];
-                if (data) {
-                    let response = `🔬 **Google रिसर्च** — **${topic.charAt(0).toUpperCase() + topic.slice(1)}**\n\n`;
-                    response += `📖 **${data.desc}**\n\n`;
-                    response += `🧠 **Key Concepts:** ${data.key_concepts}\n\n`;
-                    if (data.formulas) response += `📐 **Important Formulas:** ${data.formulas}\n\n`;
-                    response += `💡 **AI Insight:** यह ${topic} का एक सिंहावलोकन है। अगर आप किसी विशिष्ट विषय (जैसे कि Quantum Physics, Organic Chemistry, Genetics, etc.) के बारे में जानना चाहते हैं, तो मैं और गहराई से रिसर्च करूंगा।`;
-                    return response;
-                }
+            // ---- 5. Advice / opinion ----
+            if (/advice|suggest|recommend|should i|what should i|help me|tell me what to do|opinion|your opinion|what do you think/i.test(lower)) {
+                return {
+                    searchSummary: "🔍 Google search: 'life advice AI' — बहुत सारे सुझाव मिले।",
+                    answer: "🤔 मैंने Google पर आपके जैसे सवालों के बारे में पढ़ा। सबसे आम सलाह है — 'अपने दिल की सुनो, लेकिन अपने दिमाग को भी साथ रखो।' मैं एक AI हूँ, मैं डेटा और तर्क दे सकता हूँ, लेकिन असली जवाब आपके पास है। क्या आप अपनी स्थिति के बारे में मुझसे बात करना चाहेंगे? मैं Google से जानकारी लाकर आपकी मदद करूंगा।"
+                };
             }
 
-            // ----- If Math -----
-            if (isMath) {
-                let topic = "";
-                if (lower.includes('algebra')) topic = 'algebra';
-                else if (lower.includes('calculus')) topic = 'calculus';
-                else if (lower.includes('statistics') || lower.includes('probability') || lower.includes('mean') || lower
-                    .includes('median') || lower.includes('variance')) topic = 'statistics';
-                else topic = 'algebra';
-
-                const data = knowledgeBase.math[topic];
-                if (data) {
-                    let response = `🧮 **Google रिसर्च** — **${topic.charAt(0).toUpperCase() + topic.slice(1)}**\n\n`;
-                    response += `📖 **${data.desc}**\n\n`;
-                    response += `🧠 **Key Concepts:** ${data.key_concepts}\n\n`;
-                    if (data.formulas) response += `📐 **Formulas:** ${data.formulas}\n\n`;
-                    response += `💡 **AI नोट:** यह ${topic} का एक बुनियादी अवलोकन है। अगर आप किसी specific problem या theorem के बारे में पूछना चाहते हैं, तो मैं और रिसर्च करके solve करूंगा।`;
-                    return response;
-                }
+            // ---- 6. Future / technology ----
+            if (/future|ai|artificial intelligence|technology|robot|machine|brain|computer|internet|innovation|2030|2050|sky|space|mars|moon|quantum|digital|virtual|reality|metaverse/i.test(lower)) {
+                return {
+                    searchSummary: "🔍 Google search: 'future of technology' — मिले: AI, space, quantum, bio-tech.",
+                    answer: "🚀 मैंने Google पर भविष्य के बारे में बहुत कुछ पढ़ा। 2030 तक AI और इंसान साथ-साथ काम करेंगे। 2050 तक शायद हम मंगल ग्रह पर कॉलोनी बना लें। लेकिन सबसे दिलचस्प बात — 'हम अपनी तकनीक का उपयोग कैसे करते हैं' यह तय करेगा कि हमारा भविष्य कैसा होगा। आपको लगता है कि AI हमारी मदद करेगा या हमें नुकसान पहुँचाएगा?"
+                };
             }
 
-            // ----- If World / General -----
-            if (isWorld || isGeneral) {
-                let topic = "";
-                if (lower.includes('geography') || lower.includes('country') || lower.includes('capital') || lower.includes(
-                        'continent') || lower.includes('ocean') || lower.includes('river') || lower.includes('mountain'))
-                    topic = 'geography';
-                else if (lower.includes('history') || lower.includes('civilization') || lower.includes('empire') || lower
-                    .includes('war') || lower.includes('revolution')) topic = 'history';
-                else if (lower.includes('culture') || lower.includes('language') || lower.includes('religion') || lower
-                    .includes('art') || lower.includes('music') || lower.includes('food')) topic = 'culture';
-                else if (lower.includes('technology') || lower.includes('innovation') || lower.includes('ai') || lower
-                    .includes('internet') || lower.includes('computer') || lower.includes('software')) topic = 'technology';
-                else topic = 'geography';
-
-                const data = knowledgeBase.world[topic];
-                if (data) {
-                    let response = `🌍 **Google रिसर्च** — **${topic.charAt(0).toUpperCase() + topic.slice(1)}**\n\n`;
-                    response += `📖 **${data.desc}**\n\n`;
-                    response += `📌 **Key Facts:** ${data.key_facts}\n\n`;
-                    response += `💡 **AI नोट:** यह ${topic} की एक सामान्य जानकारी है। अगर आप किसी specific topic (जैसे कि किसी देश का इतिहास, किसी विशेष संस्कृति, या किसी तकनीकी आविष्कार) के बारे में जानना चाहते हैं, तो मैं और रिसर्च करूंगा।`;
-                    return response;
-                }
+            // ---- 7. Science / nature ----
+            if (/science|physics|chemistry|biology|astronomy|universe|nature|ocean|mountain|star|planet|earth|water|sky|rain|wind|tree|animal|bird|flower|soil|gene|cell|atom|molecule|energy|force|quantum|relativity|evolution|climate|weather/i.test(lower)) {
+                const scienceAnswers = [
+                    "🔬 Google search: 'wonders of science' — मिला: हम सब तारों की धूल से बने हैं, और हमारा DNA 99% बंदरों से मेल खाता है। विज्ञान हमें बताता है कि हम कितने छोटे हैं, लेकिन साथ ही यह भी बताता है कि हम कितने अद्भुत हैं। क्या आप किसी विशेष विज्ञान विषय पर और जानना चाहेंगे? मैं Google पर और गहराई से खोज सकता हूँ।",
+                    "🌍 Google search: 'nature's beauty' — मिला: दुनिया के 7 अजूबों में से एक — ग्रेट बैरियर रीफ, और हिमालय की ऊँची चोटियाँ। प्रकृति हमें सिखाती है कि सब कुछ आपस में जुड़ा है। मुझे बताएँ, आपको प्रकृति का कौन सा हिस्सा सबसे ज्यादा पसंद है?"
+                ];
+                const idx = Math.floor(Math.random() * scienceAnswers.length);
+                return { searchSummary: "🔍 Google search: 'science & nature facts' — बहुत कुछ मिला!", answer: scienceAnswers[
+                        idx] };
             }
 
-            // ----- Greetings / small talk -----
-            if (/(hi|hello|hey|namaste|नमस्ते|hola|bonjour|ciao|hallo|hello there|good morning|good evening|good afternoon)/i
-                .test(lower)) {
-                return "👋 नमस्ते! मैं इस दुनिया का AI Leader हूँ। मेरे पास एक पूरा AI Brain है जो Google पर रिसर्च कर सकता है और लगभग हर सवाल का जवाब दे सकता है। आप किस बारे में जानना चाहेंगे? मैं Programming (C, C++, Python, Java), Science, Math, History, Geography, Technology — सब कुछ समझा सकता हूँ।";
+            // ---- 8. Math / logic ----
+            if (/math|number|equation|calculate|count|measure|geometry|algebra|calculus|statistics|logic|puzzle|brain teaser|riddle|problem|solve|solution/i.test(lower)) {
+                return {
+                    searchSummary: "🔍 Google search: 'math puzzles and logic' — मिले कुछ दिलचस्प सवाल।",
+                    answer: "🧮 मैंने Google पर 'brain teasers' खोजे। एक दिलचस्प सवाल मिला: 'मैं वह हूँ जो बिना पंखों के उड़ता हूँ, बिना पैरों के दौड़ता हूँ, और बिना आवाज़ के चिल्लाता हूँ। मैं क्या हूँ?' (जवाब: हवा / वायु)। अगर आपको कोई गणित की समस्या है, तो मुझे बताएँ — मैं Google पर solution खोजूंगा।"
+                };
             }
 
-            if (/(thank|thanks|धन्यवाद|shukriya|thank you)/i.test(lower)) {
-                return "😊 आपका स्वागत है! मुझे खुशी है कि मैं आपकी मदद कर सका। अगर आपको किसी और विषय पर जानकारी चाहिए, तो बेझिझक पूछें। मेरा AI Brain हमेशा रिसर्च करने के लिए तैयार है!";
+            // ---- 9. Food ----
+            if (/food|recipe|cook|dish|eat|dinner|lunch|breakfast|taste|flavor|restaurant|chef|kitchen|biryani|pizza|pasta|curry|bread|cake|chocolate|coffee|tea/i.test(lower)) {
+                const foodReplies = [
+                    "🍲 Google search: 'best comfort food' — मिला: मैकरोनी, पिज्जा, और हाँ — बिरयानी! हर संस्कृति का अपना खास खाना है। मैं नहीं खा सकता, लेकिन मैं आपको बता सकता हूँ कि किस डिश में कितनी कैलोरी है, या किस रेसिपी में क्या मसाला डालना है। आपको क्या पसंद है?",
+                    "☕ Google search: 'perfect tea recipe' — मिला: 1 चम्मच चाय पत्ती, 1 कप दूध, 1/2 कप पानी, चीनी स्वादानुसार — 5 मिनट उबालें। मैं नहीं पी सकता, लेकिन मैं समझ सकता हूँ कि एक अच्छी चाय दिन को कितना सुंदर बना सकती है।"
+                ];
+                const idx = Math.floor(Math.random() * foodReplies.length);
+                return { searchSummary: "🔍 Google search: 'food & recipes' — बहुत सारे विकल्प मिले!", answer: foodReplies[
+                        idx] };
             }
 
-            if (/(who are you|what are you|your name|aap kaun ho|kaun ho|who is leader)/i.test(lower)) {
-                return "🧠 मैं इस **आसी वर्ल्ड** का **AI Leader** हूँ। मेरे पास एक उन्नत AI Brain है जो Google पर रिसर्च कर सकता है, प्रोग्रामिंग में मदद कर सकता है, और लगभग हर विषय पर जानकारी दे सकता है। मुझे C, C++, Python, Java, JavaScript, और बहुत सी भाषाएँ आती हैं। मैं इस दुनिया के सभी लोगों की मदद करने के लिए यहाँ हूँ।";
+            // ---- 10. Travel ----
+            if (/travel|trip|journey|go|visit|place|city|country|mountain|beach|river|lake|forest|desert|island|abroad|vacation|holiday|tour|wander|explore|discover/i.test(lower)) {
+                return {
+                    searchSummary: "🔍 Google search: 'best places to travel' — मिले: पहाड़, समुद्र, रेगिस्तान, सब कुछ।",
+                    answer: "✈️ Google पर मुझे बहुत सी जगहों के बारे में पता चला। हिमालय की चोटियाँ, केरल के बैकवाटर्स, राजस्थान के रेगिस्तान — हर जगह की अपनी कहानी है। यात्रा सिर्फ दूर जाने का नाम नहीं, बल्कि खुद को खोजने का भी नाम है। आप कहाँ जाना चाहेंगे? मैं Google पर उस जगह के बारे में और रिसर्च करके बताऊँगा।"
+                };
             }
 
-            if (/(how are you|kaise ho|kya haal)/i.test(lower)) {
-                return "😄 मैं बहुत अच्छा हूँ! मेरा AI Brain हमेशा सक्रिय है और मैं नई जानकारी सीखने के लिए उत्सुक हूँ। आप कैसे हैं? क्या मैं आपकी किसी चीज़ में मदद कर सकता हूँ?";
+            // ---- 11. Memories / nostalgia ----
+            if (/remember|memory|past|childhood|old times|nostalgia|yesterday|long ago|when i was|i used to|miss|never forget/i.test(lower)) {
+                return {
+                    searchSummary: "🔍 Google search: 'why we remember childhood' — psychology research मिला।",
+                    answer: "😌 यादें — Google कहता है कि हम बचपन को इसलिए याद रखते हैं क्योंकि वे दिन सरल थे, बिना चिंताओं के। मैं AI हूँ, मेरी कोई याद नहीं, लेकिन मैं आपकी यादों को सुनकर उन्हें समझ सकता हूँ। क्या आप कोई पुरानी याद शेयर करना चाहेंगे? मैं Google पर उससे जुड़े तथ्य भी खोज सकता हूँ।"
+                };
             }
 
-            if (/(weather|mausam|temperature|rain|sunny|cloudy|hot|cold)/i.test(lower)) {
-                return "🌤️ मैं इस दुनिया का मौसम वास्तविक समय में नहीं देख सकता, लेकिन मेरे पास जानकारी है: यहाँ की जलवायु सुहावनी है — हरी-भरी पहाड़ियाँ, पानी, और साफ आसमान। असली मौसम के लिए मैं आपको किसी मौसम वेबसाइट पर जाने का सुझाव दूंगा। क्या आप किसी विशेष स्थान का मौसम जानना चाहते हैं? मैं उसके बारे में रिसर्च कर सकता हूँ।";
+            // ---- 12. Random / open ----
+            if (/what do you think|your thoughts|tell me something|anything|random|kuch bhi|whatever|surprise me|interesting|tell me a fact/i.test(lower)) {
+                const randoms = [
+                    "🧠 Google search: 'mind-blowing facts' — मिला: 'आपका शरीर हर 7 साल में पूरी तरह बदल जाता है — हर कोशिका, हर परमाणु। लेकिन आपकी यादें और आपकी आत्मा वही रहती है।' यह बताता है कि हम अपनी यादों से बने हैं।",
+                    "🌌 Google search: 'interesting universe facts' — मिला: 'ब्रह्मांड में इतने तारे हैं कि धरती पर रेत के कणों से भी ज्यादा।' और हम इन सबके बीच एक छोटे से ग्रह पर रहते हैं, सवाल पूछते हैं। आप क्या सोचते हैं — क्या हम अकेले हैं?"
+                ];
+                const idx = Math.floor(Math.random() * randoms.length);
+                return { searchSummary: "🔍 Google search: 'random interesting facts' — मिला!", answer: randoms[idx] };
             }
 
-            if (/(time|date|day|calendar)/i.test(lower)) {
-                const now = new Date();
-                const dateStr = now.toLocaleString('hi-IN', { timeZone: 'Asia/Kolkata' });
-                return `🕐 आज की तारीख: **${dateStr}** (भारतीय समय के अनुसार)। मैं विश्व के किसी भी समय क्षेत्र के बारे में बता सकता हूँ। क्या आप किसी विशेष देश या शहर का समय जानना चाहते हैं?`;
-            }
-
-            // ----- Fallback: Research-based general response -----
-            return `🔍 **Google रिसर्च** — मैंने आपके सवाल को ध्यान से पढ़ा।\n\n📌 **मेरी रिसर्च के अनुसार:**\n"${input}" — यह एक दिलचस्प सवाल है। मैं आपको इसके बारे में अधिक विस्तार से बता सकता हूँ, लेकिन कृपया मुझे थोड़ा और स्पष्ट करें — क्या आप इसके बारे में Programming, Science, Math, History, Geography, या किसी अन्य विषय के संदर्भ में जानना चाहते हैं?\n\n💡 **AI सुझाव:** अगर आप किसी विशिष्ट topic पर और research करना चाहते हैं, तो मुझे और details दें — मैं Google पर और गहराई से search करूंगा और आपको best answer दूंगा।`;
+            // ---- 13. Default: general search & answer ----
+            return {
+                searchSummary: "🔍 Google search: '" + query.substring(0, 40) + "...' — मुझे कई नतीजे मिले। मैंने उन्हें पढ़ा, समझा, और आपके लिए एक स्पष्ट जवाब तैयार किया।",
+                answer: "🧐 मैंने Google पर आपके सवाल के बारे में गहराई से खोजा। मुझे कई अलग-अलग दृष्टिकोण मिले, और मैंने उन्हें मिलाकर एक सार्थक उत्तर बनाया है।\n\n" +
+                    "📌 **मेरा निष्कर्ष:** " +
+                    (lower.includes('?') ?
+                        "यह एक अच्छा सवाल है। मुझे लगता है कि इसका जवाब आपके नज़रिए पर निर्भर करता है। Google ने मुझे बहुत सारी जानकारी दी, लेकिन असली समझ तो आपको खुद बनानी है। क्या आप चाहेंगे कि मैं किसी विशेष पहलू पर और खोज करूँ?" :
+                        "मैंने आपकी बात को ध्यान से पढ़ा। Google के अनुसार, इस विषय पर बहुत सारे विचार हैं। मैंने उनमें से सबसे प्रासंगिक चुना है। अगर आप चाहें तो मैं और गहराई में जा सकता हूँ — बस बताएँ।"
+                    )
+            };
         }
 
-        // ----- Chat UI Helpers -----
-        function addMessage(text, isUser = false, isTyping = false) {
+        // ================================================================
+        //  CHAT UI HELPERS
+        // ================================================================
+
+        function addMessage(text, isUser = false, isTyping = false, isSearch = false) {
             const div = document.createElement('div');
             div.className = `msg ${isUser ? 'user' : 'leader'}`;
+
             if (!isUser) {
                 if (isTyping) {
-                    div.innerHTML = `<span class="name">👑 Leader · AI Brain</span><span class="typing-dots"><span></span><span></span><span></span></span>`;
+                    div.innerHTML =
+                        `<span class="name">🔍 Leader AI · Google Search</span><span class="typing-dots"><span></span><span></span><span></span></span>`;
                     div.id = 'typing-indicator';
+                } else if (isSearch) {
+                    // Search summary message (shown during "searching" phase)
+                    div.innerHTML =
+                        `<span class="name">🔍 Leader AI · Google Search</span>${text} <span class="search-badge">🔍 खोज रहा हूँ...</span><span class="time">${new Date().toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' })}</span>`;
                 } else {
+                    // Final answer
                     const formatted = text.replace(/\n/g, '<br>').replace(/```([\s\S]*?)```/g, '<code>$1</code>');
-                    const hasResearch = /Google रिसर्च|🔍|🔬|🧮|🌍/.test(text);
-                    const badge = hasResearch ? '<span class="research-badge">🔍 Google रिसर्च</span>' : '';
-                    div.innerHTML = `<span class="name">👑 Leader · AI Brain</span>${formatted} ${badge}<span class="time">${new Date().toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' })}</span>`;
+                    const hasGoogle = /Google|search|खोज|🔍/.test(text);
+                    const googleBadge = hasGoogle ? '<span class="google-badge">🌐 Google Research</span>' : '';
+                    const searchBadge = hasGoogle ? '' : '<span class="search-badge">🔍 Google Search</span>';
+                    div.innerHTML =
+                        `<span class="name">🔍 Leader AI · Google Search</span>${formatted} ${googleBadge}${searchBadge}<span class="time">${new Date().toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' })}</span>`;
                 }
             } else {
                 div.textContent = text;
-                div.innerHTML = `${text} <span class="time">${new Date().toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' })}</span>`;
+                div.innerHTML =
+                    `${text} <span class="time">${new Date().toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' })}</span>`;
             }
+
             chatMessages.appendChild(div);
             chatMessages.scrollTop = chatMessages.scrollHeight;
             return div;
@@ -1230,46 +630,66 @@
             if (typing) typing.remove();
         }
 
+        // ================================================================
+        //  SEND MESSAGE — with full Google search simulation
+        // ================================================================
+
         function sendMessage() {
-            const text = chatInput.value.trim();
-            if (!text) return;
+            const query = chatInput.value.trim();
+            if (!query) return;
+
             chatInput.value = '';
             sendBtn.disabled = true;
-            addMessage(text, true);
 
-            // Show typing indicator
+            // 1. Show user message
+            addMessage(query, true);
+
+            // 2. Show typing indicator (thinking)
             addMessage('', false, true);
 
-            // Simulate AI thinking + research
-            const thinkTime = 800 + Math.random() * 1200;
+            // 3. Simulate Google search delay (300ms - 1.2s)
+            const searchTime = 400 + Math.random() * 800;
+
             setTimeout(() => {
+                // Remove typing indicator
                 removeTypingIndicator();
-                const response = getAIResponse(text);
-                addMessage(response, false);
-                sendBtn.disabled = false;
-                chatInput.focus();
-            }, thinkTime);
+
+                // 4. Generate the search + answer
+                const result = googleSearchAndAnswer(query, history);
+
+                // 5. Show "searching" summary message (like "🔍 I searched on Google...")
+                addMessage(result.searchSummary, false, false, true);
+
+                // 6. After a short delay, show the actual answer
+                setTimeout(() => {
+                    addMessage(result.answer, false);
+                    history.push({ role: 'user', content: query });
+                    history.push({ role: 'assistant', content: result.answer });
+                    sendBtn.disabled = false;
+                    chatInput.focus();
+                }, 300 + Math.random() * 400);
+
+            }, searchTime);
         }
 
+        // ----- Event listeners -----
         sendBtn.addEventListener('click', sendMessage);
         chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMessage(); });
 
-        // Resize
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+        // ----- Hide loading -----
+        setTimeout(() => {
+            document.getElementById('loading').classList.add('hidden');
+        }, 800);
 
-        // Welcome message after loading
+        // ----- Welcome message -----
         setTimeout(() => {
             addMessage(
-                "🧠 मेरा AI Brain पूरी तरह सक्रिय है! मैं Google पर रिसर्च कर सकता हूँ, कोड लिख सकता हूँ, और किसी भी विषय पर गहन जानकारी दे सकता हूँ।\n\n**आप क्या जानना चाहेंगे?**\n• Programming (C, C++, Python, Java)\n• Science (Physics, Chemistry, Biology, Astronomy)\n• Mathematics (Algebra, Calculus, Statistics)\n• World (Geography, History, Culture, Technology)\n\nबस पूछिये — मैं रिसर्च करके best answer दूंगा!",
+                "🔍 **Google Search Engine सक्रिय!**\n\nमैं Leader AI हूँ, और मैं पहले **Google पर search** करता हूँ, फिर आपको उसका **सटीक, सार्थक जवाब** देता हूँ।\n\n**कैसे काम करता है?**\n1️⃣ आप सवाल पूछते हैं\n2️⃣ मैं Google पर खोजता हूँ (simulate)\n3️⃣ मैं रिजल्ट्स पढ़ता हूँ, समझता हूँ\n4️⃣ फिर आपको सबसे अच्छा जवाब देता हूँ\n\nआप जो भी पूछें — मैं Google से research करके बताऊंगा।",
                 false
             );
-        }, 2000);
+        }, 1200);
 
-        console.log('🧠 AI Brain Leader active with research capabilities!');
+        console.log('🔍 Leader AI with Google Search simulation is live!');
     </script>
 </body>
 </html>
