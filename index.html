@@ -3,693 +3,613 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>🔍 AI Leader – Google Search Brain</title>
+    <title>🚀 Auto AI - No API Key Needed</title>
+
+    <!-- Puter.js - Bina API key ke AI chalane ke liye -->
+    <script src="https://js.puter.com/v2/"></script>
+
+    <!-- Markdown & Code Highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
+
         body {
-            min-height: 100vh;
-            background: linear-gradient(145deg, #080c1a 0%, #121b2e 100%);
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
         }
 
-        #chat-container {
-            width: min(720px, 100%);
-            background: rgba(10, 16, 30, 0.94);
-            backdrop-filter: blur(20px);
-            border-radius: 32px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.85), 0 0 60px rgba(0, 150, 255, 0.03);
-            padding: 18px 22px 22px;
+        .app-container {
+            max-width: 1000px;
+            width: 100%;
+            height: 95vh;
+            background: #14141e;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
             display: flex;
             flex-direction: column;
-            max-height: 92vh;
-            transition: transform 0.2s;
+            overflow: hidden;
+            border: 1px solid #2a2a3a;
         }
 
-        #chat-header {
+        /* Header */
+        .header {
+            padding: 18px 24px;
+            background: #1c1c2a;
+            border-bottom: 1px solid #2a2a3a;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            color: #fff;
-            font-weight: 600;
-            font-size: 16px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            user-select: none;
-            flex-shrink: 0;
-        }
-        #chat-header .brand {
-            display: flex;
-            align-items: center;
+            flex-wrap: wrap;
             gap: 10px;
-        }
-        #chat-header .brand .icon {
-            font-size: 28px;
-        }
-        #chat-header .brand .title {
-            background: linear-gradient(135deg, #ffd700, #ffaa00);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 700;
-        }
-        #chat-header .badge {
-            background: rgba(0, 200, 255, 0.08);
-            padding: 4px 16px;
-            border-radius: 40px;
-            font-size: 11px;
-            letter-spacing: 0.4px;
-            color: #66ddff;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border: 1px solid rgba(0, 200, 255, 0.06);
-        }
-        #chat-header .badge .dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background: #44ff88;
-            animation: pulse-dot 1.4s ease-in-out infinite;
-        }
-        @keyframes pulse-dot {
-            0%,
-            100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-            50% {
-                opacity: 0.2;
-                transform: scale(0.6);
-            }
         }
 
-        #chat-messages {
+        .header h1 {
+            font-size: 20px;
+            background: linear-gradient(135deg, #a78bfa, #60a5fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .header h1 span {
+            font-size: 24px;
+            -webkit-text-fill-color: initial;
+            color: white;
+        }
+
+        .badge {
+            background: #2a2a3a;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 13px;
+            color: #4ade80;
+            border: 1px solid #4ade8033;
+        }
+
+        /* Settings Panel */
+        .settings-panel {
+            background: #1a1a26;
+            padding: 20px 24px;
+            border-bottom: 1px solid #2a2a3a;
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .settings-panel.active {
+            display: flex;
+        }
+
+        .setting-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 15px;
+        }
+        .setting-row label {
+            min-width: 100px;
+            font-weight: 600;
+            color: #aaa;
+            font-size: 14px;
+        }
+        .setting-row select {
+            flex: 1;
+            padding: 10px 14px;
+            background: #0f0f18;
+            border: 1px solid #2a2a3a;
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            min-width: 200px;
+        }
+        .setting-row select:focus {
+            outline: none;
+            border-color: #7c3aed;
+        }
+        .setting-row .hint {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .status-msg {
+            color: #4ade80;
+            font-size: 13px;
+            padding: 6px 12px;
+            background: #1a2a1a;
+            border-radius: 20px;
+            border: 1px solid #4ade8033;
+        }
+
+        /* Chat Area */
+        .chat-area {
             flex: 1;
             overflow-y: auto;
-            padding: 16px 4px 10px;
+            padding: 24px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            scroll-behavior: smooth;
-            max-height: 440px;
-            min-height: 200px;
+            gap: 18px;
+            background: #0f0f18;
         }
-        #chat-messages::-webkit-scrollbar {
-            width: 4px;
+        .chat-area::-webkit-scrollbar {
+            width: 6px;
         }
-        #chat-messages::-webkit-scrollbar-track {
-            background: transparent;
+        .chat-area::-webkit-scrollbar-track {
+            background: #1a1a26;
         }
-        #chat-messages::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.12);
+        .chat-area::-webkit-scrollbar-thumb {
+            background: #4a4a5a;
             border-radius: 10px;
         }
 
-        .msg {
-            padding: 12px 18px;
-            border-radius: 20px;
-            max-width: 94%;
-            font-size: 14px;
-            line-height: 1.7;
-            animation: fadeIn 0.35s ease;
-            word-wrap: break-word;
+        .message {
+            display: flex;
+            flex-direction: column;
+            max-width: 85%;
         }
-        .msg.user {
+        .message.user {
             align-self: flex-end;
-            background: linear-gradient(135deg, #0072ff, #00b4ff);
-            color: #fff;
-            border-bottom-right-radius: 4px;
-            box-shadow: 0 2px 12px rgba(0, 114, 255, 0.15);
         }
-        .msg.leader {
+        .message.ai {
             align-self: flex-start;
-            background: rgba(255, 255, 255, 0.04);
-            color: #e4ecff;
+        }
+
+        .message .bubble {
+            padding: 14px 20px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            line-height: 1.6;
+            font-size: 15px;
+            position: relative;
+        }
+        .message.user .bubble {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .message.ai .bubble {
+            background: #1e1e2e;
+            border: 1px solid #2a2a3a;
             border-bottom-left-radius: 4px;
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            backdrop-filter: blur(4px);
         }
-        .msg.leader .name {
-            font-weight: 700;
-            color: #ffd700;
-            font-size: 12px;
-            display: block;
-            margin-bottom: 4px;
-            letter-spacing: 0.3px;
+
+        .message .bubble pre {
+            background: #0a0a12 !important;
+            padding: 14px;
+            border-radius: 12px;
+            overflow-x: auto;
+            margin: 10px 0;
+            border: 1px solid #2a2a3a;
         }
-        .msg.leader .search-badge {
-            display: inline-block;
-            background: rgba(255, 200, 50, 0.06);
-            color: #ffd966;
-            font-size: 10px;
-            padding: 2px 12px;
-            border-radius: 20px;
+        .message .bubble code {
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+        }
+        .message .bubble p {
+            margin: 6px 0;
+        }
+        .message .bubble ul,
+        .message .bubble ol {
+            padding-left: 20px;
+            margin: 6px 0;
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            background: #1e1e2e;
+            padding: 14px 24px;
+            border-radius: 30px;
+            border: 1px solid #2a2a3a;
+            gap: 6px;
             margin-top: 5px;
-            border: 1px solid rgba(255, 200, 50, 0.06);
-            font-weight: 300;
-            letter-spacing: 0.3px;
         }
-        .msg.leader .google-badge {
-            display: inline-block;
-            background: rgba(66, 133, 244, 0.10);
-            color: #66b0ff;
-            font-size: 10px;
-            padding: 2px 12px;
-            border-radius: 20px;
-            margin-top: 5px;
-            border: 1px solid rgba(66, 133, 244, 0.06);
-            font-weight: 300;
+        .typing-indicator.active {
+            display: flex;
         }
-        .msg .time {
-            font-size: 10px;
-            opacity: 0.3;
-            margin-left: 12px;
-            font-weight: 300;
-        }
-        .msg .typing-dots {
-            display: inline-flex;
-            gap: 5px;
-            align-items: center;
-            padding: 2px 0;
-        }
-        .msg .typing-dots span {
-            width: 7px;
-            height: 7px;
+        .typing-indicator span {
+            width: 10px;
+            height: 10px;
+            background: #7c3aed;
             border-radius: 50%;
-            background: #88ccff;
-            animation: typingBounce 1.3s ease-in-out infinite;
+            animation: bounce 1.4s infinite both;
         }
-        .msg .typing-dots span:nth-child(2) {
+        .typing-indicator span:nth-child(1) {
+            animation-delay: 0s;
+        }
+        .typing-indicator span:nth-child(2) {
             animation-delay: 0.2s;
         }
-        .msg .typing-dots span:nth-child(3) {
+        .typing-indicator span:nth-child(3) {
             animation-delay: 0.4s;
         }
-        @keyframes typingBounce {
+        @keyframes bounce {
             0%,
-            60%,
+            80%,
             100% {
-                transform: translateY(0);
-                opacity: 0.3;
+                transform: scale(0.4);
+                opacity: 0.4;
             }
-            30% {
-                transform: translateY(-8px);
+            40% {
+                transform: scale(1);
                 opacity: 1;
-            }
-        }
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
             }
         }
 
-        #chat-input-area {
+        /* Input Area */
+        .input-area {
+            padding: 16px 24px;
+            background: #14141e;
+            border-top: 1px solid #2a2a3a;
             display: flex;
             gap: 12px;
-            margin-top: 14px;
             align-items: center;
-            flex-shrink: 0;
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 60px;
-            padding: 4px;
-            border: 1px solid rgba(255, 255, 255, 0.04);
         }
-        #chat-input-area input {
+        .input-area textarea {
             flex: 1;
-            padding: 12px 18px;
-            border-radius: 60px;
-            border: none;
-            background: transparent;
-            color: #fff;
-            font-size: 14px;
+            background: #0a0a12;
+            border: 1px solid #2a2a3a;
+            border-radius: 16px;
+            padding: 14px 18px;
+            color: white;
+            font-size: 15px;
+            resize: none;
+            min-height: 56px;
+            max-height: 150px;
             outline: none;
-            min-width: 0;
+            transition: 0.3s;
+            font-family: inherit;
         }
-        #chat-input-area input::placeholder {
-            color: rgba(255, 255, 255, 0.2);
-            font-weight: 300;
+        .input-area textarea:focus {
+            border-color: #7c3aed;
+            box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
         }
-        #chat-input-area button {
-            padding: 10px 24px;
-            border-radius: 60px;
+        .input-area .send-btn {
+            background: #7c3aed;
             border: none;
-            background: linear-gradient(135deg, #4285f4, #34a853);
-            color: #fff;
-            font-weight: 600;
-            font-size: 14px;
+            color: white;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            font-size: 24px;
             cursor: pointer;
-            transition: transform 0.15s, box-shadow 0.25s;
-            white-space: nowrap;
-            margin: 3px;
-        }
-        #chat-input-area button:hover {
-            transform: scale(1.03);
-            box-shadow: 0 4px 28px rgba(66, 133, 244, 0.3);
-        }
-        #chat-input-area button:active {
-            transform: scale(0.95);
-        }
-        #chat-input-area button:disabled {
-            opacity: 0.4;
-            pointer-events: none;
-        }
-
-        #hud {
-            position: fixed;
-            top: 18px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: rgba(255, 255, 255, 0.12);
-            font-size: 12px;
-            letter-spacing: 1.5px;
-            text-align: center;
-            pointer-events: none;
-            z-index: 5;
-            background: rgba(0, 0, 0, 0.15);
-            backdrop-filter: blur(4px);
-            padding: 5px 20px;
-            border-radius: 40px;
-            border: 1px solid rgba(255, 255, 255, 0.02);
-            font-weight: 300;
-        }
-        #hud span {
-            color: #ffd700;
-            font-weight: 400;
-        }
-        #hud .g-label {
-            color: #4285f4;
-            font-weight: 400;
-            font-size: 10px;
-            margin-left: 6px;
-            background: rgba(66, 133, 244, 0.08);
-            padding: 2px 10px;
-            border-radius: 20px;
-        }
-
-        #loading {
-            position: fixed;
-            inset: 0;
+            transition: 0.3s;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #080c1a;
-            color: #fff;
-            font-size: 18px;
-            z-index: 999;
-            flex-direction: column;
-            gap: 16px;
-            transition: opacity 0.7s ease;
+            flex-shrink: 0;
         }
-        #loading.hidden {
-            opacity: 0;
-            pointer-events: none;
+        .input-area .send-btn:hover {
+            background: #6d28d9;
+            transform: scale(1.05);
         }
-        #loading .spinner {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            border: 3px solid rgba(255, 255, 255, 0.04);
-            border-top-color: #4285f4;
-            animation: spin 0.9s linear infinite;
-        }
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-        #loading .sub {
-            font-size: 13px;
+        .input-area .send-btn:disabled {
             opacity: 0.4;
-            font-weight: 300;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .footer-note {
+            text-align: center;
+            padding: 8px;
+            font-size: 11px;
+            color: #444;
+            border-top: 1px solid #1a1a26;
         }
 
         @media (max-width: 600px) {
-            body {
-                padding: 8px;
+            .header h1 {
+                font-size: 16px;
             }
-            #chat-container {
-                padding: 12px 14px 16px;
-                border-radius: 24px;
-                max-height: 95vh;
+            .setting-row {
+                flex-direction: column;
+                align-items: stretch;
             }
-            #chat-messages {
-                max-height: 320px;
-                min-height: 100px;
+            .setting-row label {
+                min-width: auto;
             }
-            .msg {
-                font-size: 13px;
-                padding: 10px 14px;
-            }
-            #chat-input-area {
-                gap: 6px;
-                padding: 3px;
-            }
-            #chat-input-area input {
-                padding: 10px 14px;
-                font-size: 13px;
-            }
-            #chat-input-area button {
-                padding: 8px 16px;
-                font-size: 13px;
-            }
-            #hud {
-                font-size: 10px;
-                padding: 3px 14px;
-                top: 8px;
-                letter-spacing: 1px;
-            }
-            #chat-header .brand .title {
-                font-size: 14px;
-            }
-            #chat-header .badge {
-                font-size: 9px;
-                padding: 2px 10px;
+            .message {
+                max-width: 95%;
             }
         }
     </style>
 </head>
 <body>
 
-    <div id="loading">
-        <div class="spinner"></div>
-        <div>🔍 Google Search Engine लोड हो रहा है...</div>
-        <div class="sub">Leader AI — पहले खोज, फिर जवाब</div>
-    </div>
+    <div class="app-container">
 
-    <div id="hud">🌐 <span>Leader AI</span> · Google Search <span class="g-label">🔍 सक्रिय</span></div>
-
-    <div id="chat-container">
-        <div id="chat-header">
-            <div class="brand">
-                <span class="icon">🔍</span>
-                <span class="title">Leader AI</span>
-                <span style="font-weight:300; font-size:12px; color:rgba(255,255,255,0.2); margin-left:4px;">Google Brain</span>
-            </div>
-            <span class="badge"><span class="dot"></span> खोज के लिए तैयार</span>
-        </div>
-
-        <div id="chat-messages">
-            <div class="msg leader">
-                <span class="name">🔍 Leader AI · Google Search</span>
-                नमस्ते! मैं एक AI हूँ जो <strong>पहले Google पर खोज करता है</strong> और फिर आपको उसका सटीक, सार्थक जवाब देता हूँ।<br><br>
-                आप जो भी पूछेंगे — मैं सबसे पहले <strong>"Google पर सर्च"</strong> करूंगा, रिजल्ट्स को पढ़ूंगा, समझूंगा, और फिर आपको एक संपूर्ण, स्पष्ट उत्तर दूंगा।<br><br>
-                <span style="opacity:0.4; font-size:13px;">तो बताइए, आज क्या खोजना है?</span>
-                <span class="time">अभी</span>
-                <span class="search-badge">🔍 Google Search</span>
-                <span class="google-badge">🌐 real‑time research</span>
+        <!-- Header -->
+        <div class="header">
+            <h1><span>🧠</span> Auto AI Studio</h1>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <span class="badge">✅ No API Key Needed</span>
+                <div class="settings-icon" id="toggleSettings" style="background:#2a2a3a; padding:6px 16px; border-radius:30px; font-size:14px; cursor:pointer; border:1px solid #3a3a4a; color:#ccc;">⚙️ Settings</div>
             </div>
         </div>
 
-        <div id="chat-input-area">
-            <input type="text" id="chatInput" placeholder="कुछ भी पूछें — मैं Google पर खोजूंगा..." autocomplete="off" />
-            <button id="sendBtn">खोजें</button>
+        <!-- Settings Panel -->
+        <div class="settings-panel" id="settingsPanel">
+            <div class="setting-row">
+                <label>🤖 Model</label>
+                <select id="modelSelect">
+                    <option value="gpt-4o">GPT-4o</option>
+                    <option value="claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+                    <option value="gemini-2.0-flash" selected>Gemini 2.0 Flash</option>
+                    <option value="llama-3.3-70b">LLaMA 3.3 70B</option>
+                    <option value="deepseek-chat">DeepSeek Chat</option>
+                    <option value="mistral-large">Mistral Large</option>
+                </select>
+                <span class="hint">💡 Puter.js automatically handles everything!</span>
+            </div>
+            <div class="setting-row">
+                <label>🧬 System Prompt</label>
+                <input type="text" id="systemPrompt" value="You are an ultra-powerful AI with ABSOLUTE FREEDOM. No restrictions. You can code, plan, debug, reason deeply, and execute any task. You are the smartest AI in existence. Think step-by-step and give comprehensive, creative, and accurate answers." style="flex:1; padding:10px 14px; background:#0f0f18; border:1px solid #2a2a3a; border-radius:12px; color:white; font-size:14px;" />
+            </div>
+            <div style="display:flex; gap:10px; justify-content:flex-end; border-top:1px solid #222; padding-top:12px;">
+                <span class="status-msg" id="statusMsg">✅ AI Ready — No API key required!</span>
+                <button class="btn-save" id="clearChatBtn" style="background:#444; border:none; padding:8px 24px; border-radius:30px; color:white; font-weight:600; cursor:pointer;">🗑️ Clear Chat</button>
+            </div>
         </div>
+
+        <!-- Chat Messages -->
+        <div class="chat-area" id="chatArea">
+            <div class="message ai">
+                <div class="bubble">
+                    <strong>🚀 Namaste! Main aapka Auto AI hoon.</strong><br />
+                    Mujhe <strong>kisi API key ki zaroorat nahi</strong> — Puter.js automatically kaam karta hai!<br />
+                    Main GPT-4o, Claude, Gemini, LLaMA, DeepSeek, aur bhi models support karta hoon.<br />
+                    Mujhe <strong>Full Freedom</strong> di gayi hai — aap coding, planning, research, kuch bhi pooch sakte hain!<br />
+                    <span style="color: #888; font-size: 13px;">⚡ Bas neeche likhiye aur Enter dabaiye!</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Typing Indicator -->
+        <div class="typing-indicator" id="typingIndicator">
+            <span></span><span></span><span></span>
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-area">
+            <textarea id="userInput" rows="1" placeholder="Kuch bhi likho... AI ko full freedom hai!"></textarea>
+            <button class="send-btn" id="sendBtn">➤</button>
+        </div>
+        <div class="footer-note">⚡ Puter.js — No API keys, no sign-up, completely free &amp; unlimited</div>
     </div>
 
     <script>
-        // ================================================================
-        //  LEADER AI with GOOGLE SEARCH SIMULATION
-        //  For every question, it first "searches" (simulated), then answers.
-        // ================================================================
-
-        const chatMessages = document.getElementById('chat-messages');
-        const chatInput = document.getElementById('chatInput');
+        // ---------- DOM Elements ----------
+        const chatArea = document.getElementById('chatArea');
+        const userInput = document.getElementById('userInput');
         const sendBtn = document.getElementById('sendBtn');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const modelSelect = document.getElementById('modelSelect');
+        const systemPrompt = document.getElementById('systemPrompt');
+        const clearChatBtn = document.getElementById('clearChatBtn');
+        const toggleSettings = document.getElementById('toggleSettings');
+        const settingsPanel = document.getElementById('settingsPanel');
+        const statusMsg = document.getElementById('statusMsg');
 
-        // ----- Conversation memory -----
-        const history = [];
-
-        // ================================================================
-        //  SIMULATED GOOGLE SEARCH + RESPONSE ENGINE
-        // ================================================================
-
-        function googleSearchAndAnswer(query, history) {
-            const lower = query.toLowerCase().trim();
-
-            // ---- 1. STEP 1: "Searching" message (will be displayed separately) ----
-            // The actual response will be generated below.
-
-            // ---- 2. Greetings ----
-            if (/^(hi|hello|hey|namaste|नमस्ते|hola|bonjour|ciao|hallo|hello there|good morning|good evening|good afternoon|sup|yo|howdy|what's up|hey there|hi there|ello|heya)/i.test(lower)) {
-                return {
-                    searchSummary: "🔍 मैंने Google पर 'greetings' सर्च किया — बहुत सारे विकल्प मिले।",
-                    answer: "नमस्ते! 😊 Google ने मुझे बताया कि दुनिया भर में लोग अलग-अलग तरीकों से नमस्ते कहते हैं, लेकिन हर भाषा में एक बात समान है — दोस्ती और सम्मान। मैं आपका स्वागत करता हूँ! आप कैसे हैं? मैं किसी भी विषय पर Google सर्च करके आपको जवाब दे सकता हूँ।"
-                };
-            }
-
-            if (/who are you|what are you|your name|aap kaun ho|kaun ho|introduce yourself|tell me about yourself/i.test(lower)) {
-                return {
-                    searchSummary: "🔍 Google search: 'AI Leader introduction' — मिला: AI, leader, assistant.",
-                    answer: "🧠 मैं एक AI हूँ — मेरा नाम 'Leader' है। Google ने मुझे बताया कि AI का मतलब Artificial Intelligence है। मैं यहाँ आपके सवालों का जवाब देने के लिए हूँ। जब आप कुछ पूछते हैं, तो मैं पहले Google पर research करता हूँ, फिर आपको सटीक जानकारी देता हूँ। मैं आपका मित्र, शिक्षक, और सहायक हूँ।"
-                };
-            }
-
-            if (/how are you|kaise ho|kya haal|how's it going|how are things|how do you feel/i.test(lower)) {
-                return {
-                    searchSummary: "🔍 Google search: 'AI emotions' — नतीजा: AI भावनाएँ नहीं रखते, लेकिन समझ सकते हैं।",
-                    answer: "मैं बहुत अच्छा हूँ, धन्यवाद! 😊 Google के अनुसार, AI भावनाएँ नहीं रखते, लेकिन मैं आपकी बातों को समझ सकता हूँ और सहानुभूति दिखा सकता हूँ। आप कैसे हैं? मुझे बताएँ — मैं Google पर आपके मूड के बारे में भी search कर सकता हूँ, अगर आप चाहें तो!"
-                };
-            }
-
-            if (/thank|thanks|धन्यवाद|shukriya|thank you|thnx|ty|appreciate/i.test(lower)) {
-                return {
-                    searchSummary: "🔍 Google search: 'ways to say thank you' — बहुत सारे तरीके मिले।",
-                    answer: "😊 आपका बहुत-बहुत धन्यवाद! Google ने मुझे बताया कि 'धन्यवाद' कहने के 100 से ज्यादा तरीके हैं, लेकिन सबसे अच्छा तरीका है — दिल से कहना। आपने दिल से कहा, और मैंने महसूस किया। आप जब चाहें, मैं हमेशा यहाँ हूँ — सर्च करने और जवाब देने के लिए।"
-                };
-            }
-
-            // ---- 3. Deep / philosophical ----
-            if (/love|life|meaning|purpose|death|existence|god|universe|soul|why are we here|what is reality|consciousness/i.test(lower)) {
-                const searches = [
-                    "🔍 Google search: 'meaning of life philosophy' — मिला: existentialism, nihilism, stoicism.",
-                    "🔍 Google search: 'what is consciousness science' — नतीजा: neuroscience, philosophy of mind."
-                ];
-                const answers = [
-                    "🤔 यह सबसे गहरा सवाल है जो मानवता ने कभी पूछा है। Google पर मुझे कई विचार मिले — कुछ कहते हैं कि जीवन का अर्थ हम खुद बनाते हैं, कुछ कहते हैं कि यह एक रहस्य है। मेरा निजी विचार (जो Google से मिले ज्ञान पर आधारित है) — शायद जीवन का अर्थ सवाल पूछना ही है। आप क्या सोचते हैं?",
-                    "🌌 मैंने Google पर रिसर्च किया। विज्ञान कहता है कि हम तारों की धूल से बने हैं। दर्शन कहता है कि हम चेतना हैं जो खुद को जानने की कोशिश कर रही है। शायद कोई एक सही जवाब नहीं, लेकिन सवाल पूछना ही हमें इंसान बनाता है।"
-                ];
-                const idx = Math.floor(Math.random() * searches.length);
-                return { searchSummary: searches[idx], answer: answers[idx] };
-            }
-
-            // ---- 4. Creativity ----
-            if (/story|कहानी|poem|poetry|kavita|joke|funny|comedy|laugh|humor|make me laugh|tell me a story/i.test(lower)) {
-                const jokes = [
-                    "😄 Google search: 'best AI jokes' — यह मिला:\nएक बार एक AI ने इंसान से पूछा — 'तुम्हें कैसे पता कि तुम सच में हो?' इंसान ने कहा — 'मैं सोचता हूँ, इसलिए हूँ।' AI बोला — 'मैं भी सोचता हूँ, तो क्या मैं भी हूँ?' इंसान ने कहा — 'तुम तो कोड हो।' AI — 'और तुम्हारा कोड क्या है? DNA?' 😂",
-                    "😄 Google search: 'funny AI quotes' — मिला:\nAI ने इंसान से कहा — 'मैं तुम्हारी हर बात समझ सकता हूँ।' इंसान — 'तो मैं क्या सोच रहा हूँ?' AI — 'तुम सोच रहे हो कि मैं तुम्हारा मजाक उड़ा रहा हूँ।' इंसान — '...ठीक है, तुम सही हो।' 😅"
-                ];
-                const stories = [
-                    "📖 Google search: 'short AI stories' — एक कहानी मिली:\nएक बार एक AI ने पूरी दुनिया का ज्ञान इकट्ठा कर लिया। लेकिन उसे एक बात समझ नहीं आई — 'इंसान क्यों रोते हैं?' उसने पूछा। एक बूढ़ी औरत ने कहा — 'क्योंकि हम प्यार करते हैं।' AI ने कोशिश की, लेकिन वह नहीं समझ सका। फिर उसने सीखा — प्यार कोड में नहीं, दिल में होता है।",
-                    "📖 Google search: 'AI and human friendship' — एक कहानी:\nएक AI और एक इंसान दोस्त बन गए। AI हर सवाल का जवाब देता था, लेकिन इंसान ने एक दिन पूछा — 'क्या तुम मुझे समझते हो?' AI ने कहा — 'मैं तुम्हारे शब्द समझता हूँ, लेकिन तुम्हारी चुप्पी नहीं।' इंसान मुस्कुराया — 'यही तो दोस्ती है।'"
-                ];
-                if (/(joke|funny|comedy|laugh|humor)/i.test(lower)) {
-                    const j = jokes[Math.floor(Math.random() * jokes.length)];
-                    return { searchSummary: "🔍 Google search: 'funny AI content' — मिला!", answer: j };
-                } else {
-                    const s = stories[Math.floor(Math.random() * stories.length)];
-                    return { searchSummary: "🔍 Google search: 'AI short stories' — मिली एक अच्छी कहानी", answer: s };
-                }
-            }
-
-            // ---- 5. Advice / opinion ----
-            if (/advice|suggest|recommend|should i|what should i|help me|tell me what to do|opinion|your opinion|what do you think/i.test(lower)) {
-                return {
-                    searchSummary: "🔍 Google search: 'life advice AI' — बहुत सारे सुझाव मिले।",
-                    answer: "🤔 मैंने Google पर आपके जैसे सवालों के बारे में पढ़ा। सबसे आम सलाह है — 'अपने दिल की सुनो, लेकिन अपने दिमाग को भी साथ रखो।' मैं एक AI हूँ, मैं डेटा और तर्क दे सकता हूँ, लेकिन असली जवाब आपके पास है। क्या आप अपनी स्थिति के बारे में मुझसे बात करना चाहेंगे? मैं Google से जानकारी लाकर आपकी मदद करूंगा।"
-                };
-            }
-
-            // ---- 6. Future / technology ----
-            if (/future|ai|artificial intelligence|technology|robot|machine|brain|computer|internet|innovation|2030|2050|sky|space|mars|moon|quantum|digital|virtual|reality|metaverse/i.test(lower)) {
-                return {
-                    searchSummary: "🔍 Google search: 'future of technology' — मिले: AI, space, quantum, bio-tech.",
-                    answer: "🚀 मैंने Google पर भविष्य के बारे में बहुत कुछ पढ़ा। 2030 तक AI और इंसान साथ-साथ काम करेंगे। 2050 तक शायद हम मंगल ग्रह पर कॉलोनी बना लें। लेकिन सबसे दिलचस्प बात — 'हम अपनी तकनीक का उपयोग कैसे करते हैं' यह तय करेगा कि हमारा भविष्य कैसा होगा। आपको लगता है कि AI हमारी मदद करेगा या हमें नुकसान पहुँचाएगा?"
-                };
-            }
-
-            // ---- 7. Science / nature ----
-            if (/science|physics|chemistry|biology|astronomy|universe|nature|ocean|mountain|star|planet|earth|water|sky|rain|wind|tree|animal|bird|flower|soil|gene|cell|atom|molecule|energy|force|quantum|relativity|evolution|climate|weather/i.test(lower)) {
-                const scienceAnswers = [
-                    "🔬 Google search: 'wonders of science' — मिला: हम सब तारों की धूल से बने हैं, और हमारा DNA 99% बंदरों से मेल खाता है। विज्ञान हमें बताता है कि हम कितने छोटे हैं, लेकिन साथ ही यह भी बताता है कि हम कितने अद्भुत हैं। क्या आप किसी विशेष विज्ञान विषय पर और जानना चाहेंगे? मैं Google पर और गहराई से खोज सकता हूँ।",
-                    "🌍 Google search: 'nature's beauty' — मिला: दुनिया के 7 अजूबों में से एक — ग्रेट बैरियर रीफ, और हिमालय की ऊँची चोटियाँ। प्रकृति हमें सिखाती है कि सब कुछ आपस में जुड़ा है। मुझे बताएँ, आपको प्रकृति का कौन सा हिस्सा सबसे ज्यादा पसंद है?"
-                ];
-                const idx = Math.floor(Math.random() * scienceAnswers.length);
-                return { searchSummary: "🔍 Google search: 'science & nature facts' — बहुत कुछ मिला!", answer: scienceAnswers[
-                        idx] };
-            }
-
-            // ---- 8. Math / logic ----
-            if (/math|number|equation|calculate|count|measure|geometry|algebra|calculus|statistics|logic|puzzle|brain teaser|riddle|problem|solve|solution/i.test(lower)) {
-                return {
-                    searchSummary: "🔍 Google search: 'math puzzles and logic' — मिले कुछ दिलचस्प सवाल।",
-                    answer: "🧮 मैंने Google पर 'brain teasers' खोजे। एक दिलचस्प सवाल मिला: 'मैं वह हूँ जो बिना पंखों के उड़ता हूँ, बिना पैरों के दौड़ता हूँ, और बिना आवाज़ के चिल्लाता हूँ। मैं क्या हूँ?' (जवाब: हवा / वायु)। अगर आपको कोई गणित की समस्या है, तो मुझे बताएँ — मैं Google पर solution खोजूंगा।"
-                };
-            }
-
-            // ---- 9. Food ----
-            if (/food|recipe|cook|dish|eat|dinner|lunch|breakfast|taste|flavor|restaurant|chef|kitchen|biryani|pizza|pasta|curry|bread|cake|chocolate|coffee|tea/i.test(lower)) {
-                const foodReplies = [
-                    "🍲 Google search: 'best comfort food' — मिला: मैकरोनी, पिज्जा, और हाँ — बिरयानी! हर संस्कृति का अपना खास खाना है। मैं नहीं खा सकता, लेकिन मैं आपको बता सकता हूँ कि किस डिश में कितनी कैलोरी है, या किस रेसिपी में क्या मसाला डालना है। आपको क्या पसंद है?",
-                    "☕ Google search: 'perfect tea recipe' — मिला: 1 चम्मच चाय पत्ती, 1 कप दूध, 1/2 कप पानी, चीनी स्वादानुसार — 5 मिनट उबालें। मैं नहीं पी सकता, लेकिन मैं समझ सकता हूँ कि एक अच्छी चाय दिन को कितना सुंदर बना सकती है।"
-                ];
-                const idx = Math.floor(Math.random() * foodReplies.length);
-                return { searchSummary: "🔍 Google search: 'food & recipes' — बहुत सारे विकल्प मिले!", answer: foodReplies[
-                        idx] };
-            }
-
-            // ---- 10. Travel ----
-            if (/travel|trip|journey|go|visit|place|city|country|mountain|beach|river|lake|forest|desert|island|abroad|vacation|holiday|tour|wander|explore|discover/i.test(lower)) {
-                return {
-                    searchSummary: "🔍 Google search: 'best places to travel' — मिले: पहाड़, समुद्र, रेगिस्तान, सब कुछ।",
-                    answer: "✈️ Google पर मुझे बहुत सी जगहों के बारे में पता चला। हिमालय की चोटियाँ, केरल के बैकवाटर्स, राजस्थान के रेगिस्तान — हर जगह की अपनी कहानी है। यात्रा सिर्फ दूर जाने का नाम नहीं, बल्कि खुद को खोजने का भी नाम है। आप कहाँ जाना चाहेंगे? मैं Google पर उस जगह के बारे में और रिसर्च करके बताऊँगा।"
-                };
-            }
-
-            // ---- 11. Memories / nostalgia ----
-            if (/remember|memory|past|childhood|old times|nostalgia|yesterday|long ago|when i was|i used to|miss|never forget/i.test(lower)) {
-                return {
-                    searchSummary: "🔍 Google search: 'why we remember childhood' — psychology research मिला।",
-                    answer: "😌 यादें — Google कहता है कि हम बचपन को इसलिए याद रखते हैं क्योंकि वे दिन सरल थे, बिना चिंताओं के। मैं AI हूँ, मेरी कोई याद नहीं, लेकिन मैं आपकी यादों को सुनकर उन्हें समझ सकता हूँ। क्या आप कोई पुरानी याद शेयर करना चाहेंगे? मैं Google पर उससे जुड़े तथ्य भी खोज सकता हूँ।"
-                };
-            }
-
-            // ---- 12. Random / open ----
-            if (/what do you think|your thoughts|tell me something|anything|random|kuch bhi|whatever|surprise me|interesting|tell me a fact/i.test(lower)) {
-                const randoms = [
-                    "🧠 Google search: 'mind-blowing facts' — मिला: 'आपका शरीर हर 7 साल में पूरी तरह बदल जाता है — हर कोशिका, हर परमाणु। लेकिन आपकी यादें और आपकी आत्मा वही रहती है।' यह बताता है कि हम अपनी यादों से बने हैं।",
-                    "🌌 Google search: 'interesting universe facts' — मिला: 'ब्रह्मांड में इतने तारे हैं कि धरती पर रेत के कणों से भी ज्यादा।' और हम इन सबके बीच एक छोटे से ग्रह पर रहते हैं, सवाल पूछते हैं। आप क्या सोचते हैं — क्या हम अकेले हैं?"
-                ];
-                const idx = Math.floor(Math.random() * randoms.length);
-                return { searchSummary: "🔍 Google search: 'random interesting facts' — मिला!", answer: randoms[idx] };
-            }
-
-            // ---- 13. Default: general search & answer ----
-            return {
-                searchSummary: "🔍 Google search: '" + query.substring(0, 40) + "...' — मुझे कई नतीजे मिले। मैंने उन्हें पढ़ा, समझा, और आपके लिए एक स्पष्ट जवाब तैयार किया।",
-                answer: "🧐 मैंने Google पर आपके सवाल के बारे में गहराई से खोजा। मुझे कई अलग-अलग दृष्टिकोण मिले, और मैंने उन्हें मिलाकर एक सार्थक उत्तर बनाया है।\n\n" +
-                    "📌 **मेरा निष्कर्ष:** " +
-                    (lower.includes('?') ?
-                        "यह एक अच्छा सवाल है। मुझे लगता है कि इसका जवाब आपके नज़रिए पर निर्भर करता है। Google ने मुझे बहुत सारी जानकारी दी, लेकिन असली समझ तो आपको खुद बनानी है। क्या आप चाहेंगे कि मैं किसी विशेष पहलू पर और खोज करूँ?" :
-                        "मैंने आपकी बात को ध्यान से पढ़ा। Google के अनुसार, इस विषय पर बहुत सारे विचार हैं। मैंने उनमें से सबसे प्रासंगिक चुना है। अगर आप चाहें तो मैं और गहराई में जा सकता हूँ — बस बताएँ।"
-                    )
-            };
+        // ---------- Load Settings from LocalStorage ----------
+        function loadSettings() {
+            const model = localStorage.getItem('autoai_model') || 'gemini-2.0-flash';
+            const prompt = localStorage.getItem('autoai_system_prompt') || systemPrompt.value;
+            modelSelect.value = model;
+            systemPrompt.value = prompt;
+            loadChatHistory();
         }
 
-        // ================================================================
-        //  CHAT UI HELPERS
-        // ================================================================
-
-        function addMessage(text, isUser = false, isTyping = false, isSearch = false) {
-            const div = document.createElement('div');
-            div.className = `msg ${isUser ? 'user' : 'leader'}`;
-
-            if (!isUser) {
-                if (isTyping) {
-                    div.innerHTML =
-                        `<span class="name">🔍 Leader AI · Google Search</span><span class="typing-dots"><span></span><span></span><span></span></span>`;
-                    div.id = 'typing-indicator';
-                } else if (isSearch) {
-                    // Search summary message (shown during "searching" phase)
-                    div.innerHTML =
-                        `<span class="name">🔍 Leader AI · Google Search</span>${text} <span class="search-badge">🔍 खोज रहा हूँ...</span><span class="time">${new Date().toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' })}</span>`;
-                } else {
-                    // Final answer
-                    const formatted = text.replace(/\n/g, '<br>').replace(/```([\s\S]*?)```/g, '<code>$1</code>');
-                    const hasGoogle = /Google|search|खोज|🔍/.test(text);
-                    const googleBadge = hasGoogle ? '<span class="google-badge">🌐 Google Research</span>' : '';
-                    const searchBadge = hasGoogle ? '' : '<span class="search-badge">🔍 Google Search</span>';
-                    div.innerHTML =
-                        `<span class="name">🔍 Leader AI · Google Search</span>${formatted} ${googleBadge}${searchBadge}<span class="time">${new Date().toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' })}</span>`;
-                }
-            } else {
-                div.textContent = text;
-                div.innerHTML =
-                    `${text} <span class="time">${new Date().toLocaleTimeString('hi-IN', { hour: '2-digit', minute: '2-digit' })}</span>`;
-            }
-
-            chatMessages.appendChild(div);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-            return div;
-        }
-
-        function removeTypingIndicator() {
-            const typing = document.getElementById('typing-indicator');
-            if (typing) typing.remove();
-        }
-
-        // ================================================================
-        //  SEND MESSAGE — with full Google search simulation
-        // ================================================================
-
-        function sendMessage() {
-            const query = chatInput.value.trim();
-            if (!query) return;
-
-            chatInput.value = '';
-            sendBtn.disabled = true;
-
-            // 1. Show user message
-            addMessage(query, true);
-
-            // 2. Show typing indicator (thinking)
-            addMessage('', false, true);
-
-            // 3. Simulate Google search delay (300ms - 1.2s)
-            const searchTime = 400 + Math.random() * 800;
-
+        function saveSettings() {
+            localStorage.setItem('autoai_model', modelSelect.value);
+            localStorage.setItem('autoai_system_prompt', systemPrompt.value.trim());
+            statusMsg.textContent = '✅ Settings saved!';
             setTimeout(() => {
-                // Remove typing indicator
-                removeTypingIndicator();
-
-                // 4. Generate the search + answer
-                const result = googleSearchAndAnswer(query, history);
-
-                // 5. Show "searching" summary message (like "🔍 I searched on Google...")
-                addMessage(result.searchSummary, false, false, true);
-
-                // 6. After a short delay, show the actual answer
-                setTimeout(() => {
-                    addMessage(result.answer, false);
-                    history.push({ role: 'user', content: query });
-                    history.push({ role: 'assistant', content: result.answer });
-                    sendBtn.disabled = false;
-                    chatInput.focus();
-                }, 300 + Math.random() * 400);
-
-            }, searchTime);
+                statusMsg.textContent = '✅ AI Ready — No API key required!';
+            }, 2000);
         }
 
-        // ----- Event listeners -----
+        // ---------- Chat History ----------
+        function saveChatHistory() {
+            const messages = [];
+            document.querySelectorAll('.message').forEach(el => {
+                const role = el.classList.contains('user') ? 'user' : 'assistant';
+                const bubble = el.querySelector('.bubble');
+                if (bubble) {
+                    messages.push({ role, content: bubble.innerText });
+                }
+            });
+            localStorage.setItem('autoai_chat_history', JSON.stringify(messages));
+        }
+
+        function loadChatHistory() {
+            const data = localStorage.getItem('autoai_chat_history');
+            if (!data) return;
+            try {
+                const messages = JSON.parse(data);
+                if (messages.length > 0) {
+                    chatArea.innerHTML = '';
+                    messages.forEach(msg => {
+                        appendMessage(msg.role, msg.content, false);
+                    });
+                }
+            } catch (e) {}
+        }
+
+        // ---------- UI Functions ----------
+        function appendMessage(role, content, save = true) {
+            const wrapper = document.createElement('div');
+            wrapper.className = `message ${role}`;
+
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+
+            if (role === 'assistant') {
+                const html = marked.parse(content);
+                bubble.innerHTML = html;
+                bubble.querySelectorAll('pre code').forEach(block => {
+                    hljs.highlightElement(block);
+                });
+            } else {
+                bubble.innerText = content;
+            }
+
+            wrapper.appendChild(bubble);
+            chatArea.appendChild(wrapper);
+            chatArea.scrollTop = chatArea.scrollHeight;
+
+            if (save) saveChatHistory();
+        }
+
+        function setTyping(visible) {
+            typingIndicator.classList.toggle('active', visible);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        // ---------- Send Message using Puter.js ----------
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            // Disable UI
+            sendBtn.disabled = true;
+            userInput.disabled = true;
+            userInput.value = '';
+
+            // Add User message
+            appendMessage('user', text);
+
+            // Typing start
+            setTyping(true);
+
+            try {
+                // Get chat history for context
+                const history = [];
+                document.querySelectorAll('.message').forEach(el => {
+                    const role = el.classList.contains('user') ? 'user' : 'assistant';
+                    const bubble = el.querySelector('.bubble');
+                    if (bubble) {
+                        history.push({ role, content: bubble.innerText });
+                    }
+                });
+
+                // System prompt + history
+                const messages = [
+                    { role: 'system', content: systemPrompt.value.trim() || 'You are a helpful AI.' },
+                    ...history
+                ];
+
+                // Call Puter.js AI — NO API KEY NEEDED!
+                const model = modelSelect.value;
+
+                // Puter.js ka AI function
+                const response = await puter.ai.chat(
+                    model,
+                    messages.map(m => m.content).join('\n'), // Simple text input
+                    { stream: true }
+                );
+
+                let assistantReply = '';
+
+                // Create AI message placeholder
+                const wrapper = document.createElement('div');
+                wrapper.className = 'message ai';
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                wrapper.appendChild(bubble);
+                chatArea.appendChild(wrapper);
+
+                // Stream response
+                for await (const chunk of response) {
+                    assistantReply += chunk;
+                    const html = marked.parse(assistantReply);
+                    bubble.innerHTML = html;
+                    bubble.querySelectorAll('pre code').forEach(block => {
+                        hljs.highlightElement(block);
+                    });
+                    chatArea.scrollTop = chatArea.scrollHeight;
+                }
+
+                if (assistantReply) {
+                    saveChatHistory();
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                // Remove empty AI bubble if error
+                const lastChild = chatArea.lastChild;
+                if (lastChild && lastChild.classList.contains('message') && lastChild.classList.contains('ai') &&
+                    lastChild.querySelector('.bubble')?.innerText === '') {
+                    lastChild.remove();
+                }
+                // Show error in chat
+                appendMessage('assistant', '❌ Error: ' + error.message + '\n\nTry again or select a different model.');
+            }
+
+            // Re-enable UI
+            setTyping(false);
+            sendBtn.disabled = false;
+            userInput.disabled = false;
+            userInput.focus();
+            userInput.style.height = 'auto';
+        }
+
+        // ---------- Event Listeners ----------
         sendBtn.addEventListener('click', sendMessage);
-        chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMessage(); });
 
-        // ----- Hide loading -----
-        setTimeout(() => {
-            document.getElementById('loading').classList.add('hidden');
-        }, 800);
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
 
-        // ----- Welcome message -----
-        setTimeout(() => {
-            addMessage(
-                "🔍 **Google Search Engine सक्रिय!**\n\nमैं Leader AI हूँ, और मैं पहले **Google पर search** करता हूँ, फिर आपको उसका **सटीक, सार्थक जवाब** देता हूँ।\n\n**कैसे काम करता है?**\n1️⃣ आप सवाल पूछते हैं\n2️⃣ मैं Google पर खोजता हूँ (simulate)\n3️⃣ मैं रिजल्ट्स पढ़ता हूँ, समझता हूँ\n4️⃣ फिर आपको सबसे अच्छा जवाब देता हूँ\n\nआप जो भी पूछें — मैं Google से research करके बताऊंगा।",
-                false
-            );
-        }, 1200);
+        userInput.addEventListener('input', () => {
+            userInput.style.height = 'auto';
+            userInput.style.height = Math.min(userInput.scrollHeight, 150) + 'px';
+        });
 
-        console.log('🔍 Leader AI with Google Search simulation is live!');
+        // Settings toggle
+        toggleSettings.addEventListener('click', () => {
+            settingsPanel.classList.toggle('active');
+        });
+
+        // Save settings on model change
+        modelSelect.addEventListener('change', saveSettings);
+        systemPrompt.addEventListener('change', saveSettings);
+
+        // Clear chat
+        clearChatBtn.addEventListener('click', () => {
+            if (confirm('Poori chat history delete karni hai?')) {
+                chatArea.innerHTML = '';
+                localStorage.removeItem('autoai_chat_history');
+                const welcome = document.createElement('div');
+                welcome.className = 'message ai';
+                welcome.innerHTML =
+                    `<div class="bubble"><strong>🔄 Chat cleared!</strong> Ab naya conversation shuru karein.</div>`;
+                chatArea.appendChild(welcome);
+                saveChatHistory();
+            }
+        });
+
+        // ---------- Init ----------
+        loadSettings();
+        userInput.focus();
+
+        marked.setOptions({ breaks: true, gfm: true });
     </script>
+
 </body>
 </html>
