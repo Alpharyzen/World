@@ -1,397 +1,1041 @@
-<!DOCTYPE html>
-<html lang="hi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🤖 Self‑Learning AI Bot (No Key, Auto Curiosity)</title>
-    <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 10px; }
-        #chat { height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 15px; background: #fafafa; margin-bottom: 12px; border-radius: 6px; }
-        .msg { margin: 10px 0; line-height: 1.5; }
-        .user { color: #1a73e8; }
-        .bot { color: #0d652d; }
-        .info { color: #5f6368; font-size: 0.85em; }
-        input, button { font-size: 0.9rem; padding: 8px 12px; margin: 4px; border-radius: 4px; border: 1px solid #ccc; }
-        button { background: #1a73e8; color: white; border: none; cursor: pointer; }
-        button:hover { background: #1557b0; }
-        .learn-panel { background: #f1f3f4; padding: 12px; border-radius: 8px; margin: 15px 0; }
-        #model-status { background: #e8f0fe; padding: 8px; margin: 8px 0; border-radius: 4px; font-size: 0.9em; }
-        .memory-badge { background: #e8eaed; padding: 2px 8px; border-radius: 12px; font-size: 0.8em; }
-    </style>
-</head>
-<body>
-    <h2>🧠 Self‑Learning AI — Curiosity, Bulk & Random Learn</h2>
-    <div id="model-status">⏳ Models load ho rahe hain…</div>
-    <div id="chat"></div>
-    <div style="display:flex; gap:6px;">
-        <input type="text" id="userInput" placeholder="Kuch bhi poochhiye..." style="flex:1;" />
-        <button onclick="sendMessage()">▶️ Bhejo</button>
-    </div>
-    <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
-        <button onclick="clearChat()">🧹 Chat Clear</button>
-        <button onclick="clearMemory()">🗑️ Memory Clear</button>
-        <span class="memory-badge" id="memoryCount">Memory: 0 chunks</span>
-    </div>
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import {
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
-    <div class="learn-panel">
-        <strong>📚 Self‑Learning Controls:</strong><br>
-        <div style="display:flex; gap:6px; align-items:center; margin-top:6px;">
-            <input type="text" id="bulkTopics" placeholder="Topic1, Topic2, ..." style="flex:1;" />
-            <button onclick="bulkLearn()">⚡ Bulk Learn</button>
+function tryExtractChart(line) {
+  try {
+    const parsed = JSON.parse(line);
+    if (parsed && parsed.chart && parsed.chart.labels && parsed.chart.values) {
+      return parsed.chart;
+    }
+  } catch (e) {
+    // not JSON, ignore
+  }
+  return null;
+}
+
+// ====== MESSAGE PARSING: splits text into prose + fenced code blocks ======
+function parseMessageParts(text) {
+  const parts = [];
+  const fenceRegex = /```(\w+)?\n([\s\S]*?)```/g;
+  let lastIndex = 0;
+  let match;
+  while ((match = fenceRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      const prose = text.slice(lastIndex, match.index).trim();
+      if (prose) parts.push({ type: "prose", text: prose });
+    }
+    parts.push({
+      type: "code",
+      lang: (match[1] || "text").toLowerCase(),
+      code: match[2].trimEnd(),
+    });
+    lastIndex = match.index + match[0].length;
+  }
+  const rest = text.slice(lastIndex).trim();
+  if (rest) parts.push({ type: "prose", text: rest });
+  if (parts.length === 0) parts.push({ type: "prose", text });
+  return parts;
+}
+
+function CodeBlock({ lang, code }) {
+  const [copied, setCopied] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const isRunnable = ["html", "htm"].includes(lang);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (e) {
+      // clipboard may be blocked; fail silently
+    }
+  };
+
+  return (
+    <div style={styles.codeWrap}>
+      <div style={styles.codeTopComment}>{`// ${lang} — ${code.split("\n").length} lines`}</div>
+      <div style={styles.codeHeader}>
+        <span style={styles.codeLang}>{lang}</span>
+        <div style={styles.codeActions}>
+          {isRunnable && (
+            <button style={styles.codeActionBtn} onClick={() => setShowPreview((p) => !p)}>
+              {showPreview ? "HIDE" : "▶ RUN"}
+            </button>
+          )}
+          <button style={styles.codeActionBtn} onClick={handleCopy}>
+            {copied ? "✓ COPIED" : "COPY"}
+          </button>
         </div>
-        <div style="margin-top:6px;">
-            <button onclick="randomLearn()">🎲 Random Learn (Wikipedia)</button>
-            <button onclick="processCuriosityQueue()" title="Curiosity queue mein bache topics seekhein">🧪 Process Curiosity Queue</button>
-            <span id="queueCount" style="font-size:0.8em; margin-left:8px;"></span>
-        </div>
-        <div style="font-size:0.8em; margin-top:6px; color:#444;">
-            💡 Low‑confidence answers ke topics <strong>apne aap</strong> curiosity queue mein jaate hain aur 5 sec baad seekh liye jaate hain.
-        </div>
+      </div>
+      <pre style={styles.codeBlock}>
+        <code>{code}</code>
+      </pre>
+      <div style={styles.codeBottomComment}>{`// end ${lang} block`}</div>
+      {isRunnable && showPreview && (
+        <iframe
+          title="html-preview"
+          srcDoc={code}
+          sandbox="allow-scripts"
+          style={styles.previewFrame}
+        />
+      )}
     </div>
+  );
+}
 
-    <script type="module">
-        import * as webllm from "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.46/lib/index.min.js";
-        import { pipeline } from "https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/transformers.min.js";
+function MessageContent({ text }) {
+  const parts = parseMessageParts(text);
+  return (
+    <>
+      {parts.map((p, i) =>
+        p.type === "code" ? (
+          <CodeBlock key={i} lang={p.lang} code={p.code} />
+        ) : (
+          <div key={i} style={styles.bubbleText}>
+            {p.text}
+          </div>
+        )
+      )}
+    </>
+  );
+}
 
-        // ========= CONFIG =========
-        const MODEL_ID = "Llama-3.2-1B-Instruct-q4f16_1-MLC";
-        let SEARX_INSTANCE = "https://searx.tiekoetter.com";
-        const BACKUP_INSTANCES = ["https://search.sapti.me", "https://searx.be"];
-        // =========================
+// ====== IMAGE GENERATION (Pollinations — free, no API key) ======
+function buildImageUrl(prompt, seed) {
+  const cleaned = encodeURIComponent(prompt.trim());
+  const s = seed || Math.floor(Math.random() * 1000000);
+  return `https://image.pollinations.ai/prompt/${cleaned}?width=768&height=768&seed=${s}&nologo=true`;
+}
 
-        let isModelReady = false, isEmbedderReady = false, embedder = null;
-        const engine = new webllm.MLCEngine();
-        const statusDiv = document.getElementById("model-status");
-        let memoryItems = [];
-        const MEMORY_KEY = "self_learning_memory";
-        const QUEUE_KEY = "curiosity_queue";  // topics to learn
+function ImageBlock({ prompt, url }) {
+  const [loaded, setLoaded] = useState(false);
+  const [errored, setErrored] = useState(false);
+  return (
+    <div style={styles.imageWrap}>
+      <div style={styles.codeTopComment}>{`// image — "${prompt}"`}</div>
+      {!loaded && !errored && (
+        <div style={styles.imageLoading}>[generating image...]</div>
+      )}
+      {errored && <div style={styles.imageLoading}>[image generation failed]</div>}
+      <img
+        src={url}
+        alt={prompt}
+        style={{ ...styles.generatedImage, display: loaded ? "block" : "none" }}
+        onLoad={() => setLoaded(true)}
+        onError={() => setErrored(true)}
+      />
+      <a href={url} target="_blank" rel="noreferrer" style={styles.imageOpenLink}>
+        open full size ↗
+      </a>
+    </div>
+  );
+}
 
-        // ---- Init ----
-        async function init() {
-            statusDiv.innerText = "⏳ Embedding model + LLM load ho rahe hain (~1.5 GB)...";
-            try {
-                embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
-                isEmbedderReady = true;
-                statusDiv.innerText = "✅ Embedder ready. Loading language model...";
-                await engine.reload(MODEL_ID);
-                isModelReady = true;
-                statusDiv.innerText = "✅ AI ready. Self‑learning active.";
-            } catch(e) {
-                statusDiv.innerText = "❌ Error: " + e.message;
-                console.error(e);
-            }
-            loadMemory();
-            updateMemoryCount();
-            renderChatHistory();
-            updateQueueCount();
-            // Process any pending curiosity queue on load
-            setTimeout(() => processCuriosityQueue(), 10000);
-        }
+// ====== STORAGE HELPERS ======
+const STORAGE_KEY = "neuralpath:chat-history";
+const STORAGE_KEY_KEYNAME = "neuralpath:api-key";
 
-        // ---- Memory (embeddings) ----
-        function saveMemory() {
-            const toSave = memoryItems.map(i => ({...i, embedding: Array.from(i.embedding)}));
-            localStorage.setItem(MEMORY_KEY, JSON.stringify(toSave));
-        }
-        function loadMemory() {
-            const raw = localStorage.getItem(MEMORY_KEY);
-            if (raw) {
-                try {
-                    const parsed = JSON.parse(raw);
-                    memoryItems = parsed.map(i => ({...i, embedding: new Float32Array(i.embedding)}));
-                } catch(e) { memoryItems = []; }
-            }
-        }
-        function addMemoryItem(text, embedding) {
-            memoryItems.push({ id: Date.now()+Math.random(), text, embedding, timestamp: Date.now() });
-            if (memoryItems.length > 500) memoryItems.shift();
-            saveMemory();
-            updateMemoryCount();
-        }
-        function clearMemory() {
-            memoryItems = [];
-            localStorage.removeItem(MEMORY_KEY);
-            updateMemoryCount();
-            appendMessage("System","🧹 Memory cleared.");
-        }
-        function updateMemoryCount() {
-            document.getElementById("memoryCount").innerText = `Memory: ${memoryItems.length} chunks`;
-        }
+async function loadHistory() {
+  try {
+    const res = await window.storage.get(STORAGE_KEY, false);
+    if (res && res.value) return JSON.parse(res.value);
+  } catch (e) {
+    // key not found or error - start fresh
+  }
+  return [];
+}
 
-        // ---- Cosine similarity & semantic search ----
-        function cosineSim(a,b) {
-            let dot=0, mA=0, mB=0;
-            for(let i=0;i<a.length;i++) { dot+=a[i]*b[i]; mA+=a[i]**2; mB+=b[i]**2; }
-            return (mA && mB) ? dot/(Math.sqrt(mA)*Math.sqrt(mB)) : 0;
-        }
-        async function searchMemory(queryEmb, topK=3, threshold=0.35) {
-            if(!memoryItems.length) return [];
-            const scored = memoryItems.map(item => ({item, score: cosineSim(queryEmb, item.embedding)}));
-            scored.sort((a,b)=>b.score-a.score);
-            return scored.filter(s=>s.score>=threshold).slice(0,topK);
-        }
-        async function getEmbedding(text) {
-            const out = await embedder(text, {pooling:'mean', normalize:true});
-            return out.data;
-        }
+async function saveHistory(messages) {
+  try {
+    await window.storage.set(STORAGE_KEY, JSON.stringify(messages), false);
+  } catch (e) {
+    console.error("Storage save failed", e);
+  }
+}
 
-        // ---- Web Search (SearXNG) ----
-        async function searchWeb(query) {
-            let res = await tryInstance(SEARX_INSTANCE, query);
-            if (res !== null) return res;
-            for (let inst of BACKUP_INSTANCES) {
-                res = await tryInstance(inst, query);
-                if (res !== null) {
-                    SEARX_INSTANCE = inst;
-                    return res;
-                }
-            }
-            return [];
-        }
-        async function tryInstance(baseUrl, query) {
-            try {
-                const url = `${baseUrl}/search?q=${encodeURIComponent(query)}&format=json&language=en`;
-                const resp = await fetch(url, { signal: AbortSignal.timeout(8000) });
-                if (!resp.ok) return null;
-                const data = await resp.json();
-                if (!data.results || !data.results.length) return null;
-                return data.results.slice(0, 5).map(r => ({
-                    title: r.title,
-                    snippet: r.content || r.snippet || "",
-                    link: r.url
-                }));
-            } catch(e) { return null; }
-        }
+async function loadApiKey() {
+  try {
+    const res = await window.storage.get(STORAGE_KEY_KEYNAME, false);
+    if (res && res.value) return res.value;
+  } catch (e) {}
+  return "";
+}
 
-        // ---- Curiosity Queue (topics to auto-learn) ----
-        function getCuriosityQueue() {
-            return JSON.parse(localStorage.getItem(QUEUE_KEY) || "[]");
-        }
-        function addToCuriosityQueue(topic) {
-            const queue = getCuriosityQueue();
-            if (!queue.includes(topic)) {
-                queue.push(topic);
-                localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
-                updateQueueCount();
-            }
-        }
-        function removeFromCuriosityQueue(topic) {
-            let queue = getCuriosityQueue();
-            queue = queue.filter(t => t !== topic);
-            localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
-            updateQueueCount();
-        }
-        function updateQueueCount() {
-            const q = getCuriosityQueue();
-            document.getElementById("queueCount").innerText = `Queue: ${q.length} topics`;
-        }
-        async function processCuriosityQueue() {
-            if (!isEmbedderReady) return;
-            const queue = getCuriosityQueue();
-            if (queue.length === 0) return;
-            appendMessage("System", `🧪 Curiosity queue se ${queue.length} topics seekh raha hoon...`);
-            for (const topic of queue) {
-                appendMessage("System", `🔍 Learning: "${topic}"`);
-                const results = await searchWeb(topic);
-                if (results.length > 0) {
-                    for (let r of results) {
-                        const text = `[Web] ${r.title}: ${r.snippet} (${r.link})`;
-                        const emb = await getEmbedding(text);
-                        addMemoryItem(text, emb);
-                    }
-                    appendMessage("System", `✅ "${topic}" ke liye ${results.length} snippets memory mein add.`);
-                } else {
-                    appendMessage("System", `❌ "${topic}" ke liye koi results nahi mile.`);
-                }
-                removeFromCuriosityQueue(topic);
-                // Thoda delay taaki rate‑limit na ho
-                await new Promise(resolve => setTimeout(resolve, 2000));
-            }
-            appendMessage("System", "📚 Curiosity queue processed.");
-        }
+async function saveApiKey(key) {
+  try {
+    await window.storage.set(STORAGE_KEY_KEYNAME, key, false);
+  } catch (e) {
+    console.error("Key save failed", e);
+  }
+}
 
-        // ---- Core Answering (with auto curiosity trigger) ----
-        async function getAnswerForQuestion(userQuestion) {
-            const qEmb = await getEmbedding(userQuestion);
-            const relevant = await searchMemory(qEmb, 3, 0.35);
-            let memoryCtx = "";
-            if (relevant.length > 0) {
-                memoryCtx = "--- Relevant Memory ---\n" + relevant.map((s,i)=>`[Memory ${i+1}] ${s.item.text}`).join('\n\n');
-            }
-            const memoryConf = relevant.length ? relevant[0].score : 0;
-            let webCtx = "", webResults = null;
-            if (memoryConf < 0.4) {
-                appendMessage("System", "🌐 Confidence low, web search kar raha hoon...");
-                webResults = await searchWeb(userQuestion);
-                if (webResults && webResults.length) {
-                    webCtx = "--- Web Results ---\n" + webResults.map((r,i)=>`[Web ${i+1}] ${r.title}: ${r.snippet}`).join('\n');
-                } else {
-                    appendMessage("System", "⚠️ Web search fail, sirf memory se jawab.");
-                }
-            }
+// ====== WIKIPEDIA FETCH ======
+async function fetchWikipedia(query) {
+  try {
+    const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(
+      query
+    )}&format=json&origin=*&srlimit=1`;
+    const searchRes = await fetch(searchUrl);
+    const searchData = await searchRes.json();
+    const title = searchData?.query?.search?.[0]?.title;
+    if (!title) return null;
 
-            const systemPrompt = "You are a helpful assistant. Use context to answer accurately. Cite sources if possible. Answer in user's language (Hindi or English).";
-            const messages = [{ role: "system", content: systemPrompt }];
-            if (memoryCtx) messages.push({ role: "system", content: memoryCtx });
-            if (webCtx) messages.push({ role: "system", content: webCtx });
-            messages.push({ role: "user", content: userQuestion });
+    const extractUrl = `https://en.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=true&explaintext=true&titles=${encodeURIComponent(
+      title
+    )}&format=json&origin=*`;
+    const extractRes = await fetch(extractUrl);
+    const extractData = await extractRes.json();
+    const pages = extractData?.query?.pages;
+    const pageId = pages ? Object.keys(pages)[0] : null;
+    const extract = pageId ? pages[pageId]?.extract : null;
+    return extract ? { title, extract: extract.slice(0, 1200) } : null;
+  } catch (e) {
+    return null;
+  }
+}
 
-            let fullReply = "";
-            const replyDiv = document.createElement("div");
-            replyDiv.className = "msg bot";
-            replyDiv.innerHTML = "<strong>Bot:</strong> <span></span>";
-            document.getElementById("chat").appendChild(replyDiv);
-            const span = replyDiv.querySelector("span");
-            try {
-                const stream = await engine.chat.completions.create({
-                    messages, temperature: 0.3, max_tokens: 500, stream: true
-                });
-                for await (const chunk of stream) {
-                    const c = chunk.choices[0]?.delta?.content || "";
-                    fullReply += c;
-                    span.innerText = fullReply;
-                    document.getElementById("chat").scrollTop = document.getElementById("chat").scrollHeight;
-                }
-            } catch(e) {
-                fullReply = "Error: " + e.message;
-                span.innerText = fullReply;
-            }
+// ====== CODE SANDBOX ======
+// Runs model-generated JS in a restricted Function scope (no DOM/network access
+// inside the executed code itself). Captures console.log output and a return value.
+function runSandboxedCode(code) {
+  const logs = [];
+  const fakeConsole = {
+    log: (...args) => logs.push(args.map(stringifyArg).join(" ")),
+  };
+  try {
+    // eslint-disable-next-line no-new-func
+    const fn = new Function("console", `"use strict";\n${code}`);
+    const result = fn(fakeConsole);
+    return { ok: true, logs, result: result !== undefined ? stringifyArg(result) : null };
+  } catch (e) {
+    return { ok: false, logs, error: e.message };
+  }
+}
 
-            // Save answer & web snippets to memory
-            if (fullReply) {
-                const ansEmb = await getEmbedding(fullReply);
-                addMemoryItem(`Q: ${userQuestion}\nA: ${fullReply}`, ansEmb);
-            }
-            if (webResults) {
-                for (let r of webResults) {
-                    const txt = `[Web] ${r.title}: ${r.snippet} (${r.link})`;
-                    const emb = await getEmbedding(txt);
-                    addMemoryItem(txt, emb);
-                }
-                // Trigger curiosity: if we did a web search, add to queue for deeper background learn
-                addToCuriosityQueue(userQuestion);
-                appendMessage("System", "🧠 Is topic ko curiosity queue mein daal diya, jald seekh loonga.");
-            }
+function stringifyArg(arg) {
+  if (typeof arg === "object") {
+    try {
+      return JSON.stringify(arg, null, 2);
+    } catch {
+      return String(arg);
+    }
+  }
+  return String(arg);
+}
 
-            return fullReply;
-        }
+function ChartBlock({ chart }) {
+  const data = chart.labels.map((label, i) => ({
+    label,
+    value: chart.values[i],
+  }));
 
-        // ---- Chat History ----
-        const CHAT_KEY = "self_learn_chat";
-        function getChatHistory() {
-            return JSON.parse(localStorage.getItem(CHAT_KEY) || "[]");
-        }
-        function saveChatHistory(msgs) {
-            if (msgs.length > 100) msgs = msgs.slice(-100);
-            localStorage.setItem(CHAT_KEY, JSON.stringify(msgs));
-        }
-        function renderChatHistory() {
-            const hist = getChatHistory();
-            hist.forEach(msg => appendMessage(msg.role==="user"?"You":"Bot", msg.content));
-        }
-        function clearChat() {
-            localStorage.removeItem(CHAT_KEY);
-            document.getElementById("chat").innerHTML = "";
-        }
+  return (
+    <div style={styles.chartWrap}>
+      {chart.title && <div style={styles.chartTitle}>{chart.title}</div>}
+      <ResponsiveContainer width="100%" height={200}>
+        {chart.type === "line" ? (
+          <LineChart data={data}>
+            <CartesianGrid stroke="#1A2420" strokeDasharray="3 3" />
+            <XAxis dataKey="label" stroke="#6B8577" fontSize={11} />
+            <YAxis stroke="#6B8577" fontSize={11} />
+            <Tooltip
+              contentStyle={{
+                background: "#131715",
+                border: "1px solid #2A3A33",
+                color: "#D7FFE8",
+              }}
+            />
+            <Line
+              type="monotone"
+              dataKey="value"
+              stroke="#00FF9C"
+              strokeWidth={2}
+              dot={{ fill: "#00FF9C", r: 3 }}
+            />
+          </LineChart>
+        ) : (
+          <BarChart data={data}>
+            <CartesianGrid stroke="#1A2420" strokeDasharray="3 3" />
+            <XAxis dataKey="label" stroke="#6B8577" fontSize={11} />
+            <YAxis stroke="#6B8577" fontSize={11} />
+            <Tooltip
+              contentStyle={{
+                background: "#131715",
+                border: "1px solid #2A3A33",
+                color: "#D7FFE8",
+              }}
+            />
+            <Bar dataKey="value" fill="#00FF9C" radius={[3, 3, 0, 0]} />
+          </BarChart>
+        )}
+      </ResponsiveContainer>
+    </div>
+  );
+}
 
-        // ---- UI ----
-        function appendMessage(sender, text) {
-            const chatDiv = document.getElementById("chat");
-            const div = document.createElement("div");
-            div.className = `msg ${sender==="You"?"user":sender==="Bot"?"bot":"info"}`;
-            div.innerHTML = `<strong>${sender}:</strong> ${text.replace(/\n/g,'<br>')}`;
-            chatDiv.appendChild(div);
-            chatDiv.scrollTop = chatDiv.scrollHeight;
-        }
+// ====== MAIN APP ======
+export default function App() {
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [processLog, setProcessLog] = useState([]);
+  const [apiKey, setApiKey] = useState("");
+  const [keyInput, setKeyInput] = useState("");
+  const [showKeyModal, setShowKeyModal] = useState(false);
+  const [storageReady, setStorageReady] = useState(false);
+  const scrollRef = useRef(null);
 
-        // ---- Send Message ----
-        async function sendMessage() {
-            if (!isModelReady || !isEmbedderReady) {
-                appendMessage("System","⏳ Models abhi ready nahi.");
-                return;
-            }
-            const input = document.getElementById("userInput");
-            const msg = input.value.trim();
-            if (!msg) return;
-            appendMessage("You", msg);
-            input.value = "";
-            const hist = getChatHistory();
-            hist.push({ role: "user", content: msg });
-            saveChatHistory(hist);
+  useEffect(() => {
+    (async () => {
+      const hist = await loadHistory();
+      const key = await loadApiKey();
+      setMessages(hist);
+      setApiKey(key);
+      if (!key) setShowKeyModal(true);
+      setStorageReady(true);
+    })();
+  }, []);
 
-            await getAnswerForQuestion(msg);
+  useEffect(() => {
+    if (storageReady) saveHistory(messages);
+  }, [messages, storageReady]);
 
-            // Update history with last bot reply
-            const lastBotSpan = document.querySelector("#chat .bot:last-of-type span");
-            if (lastBotSpan) {
-                hist.push({ role: "assistant", content: lastBotSpan.innerText });
-                saveChatHistory(hist);
-            }
-            // Background curiosity processing (after a delay)
-            setTimeout(() => processCuriosityQueue(), 5000);
-        }
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages, processLog]);
 
-        // ---- Bulk Learn ----
-        async function bulkLearn() {
-            if (!isEmbedderReady) return alert("Wait for embedder.");
-            const raw = document.getElementById("bulkTopics").value;
-            const topics = raw.split(",").map(t => t.trim()).filter(Boolean);
-            if (!topics.length) return;
-            for (const topic of topics) {
-                appendMessage("System", `📚 Bulk learn: "${topic}"`);
-                const results = await searchWeb(topic);
-                if (results.length) {
-                    for (let r of results) {
-                        const txt = `[Web] ${r.title}: ${r.snippet} (${r.link})`;
-                        const emb = await getEmbedding(txt);
-                        addMemoryItem(txt, emb);
-                    }
-                    appendMessage("System", `✅ "${topic}" embedded.`);
-                } else {
-                    appendMessage("System", `❌ "${topic}" no results.`);
-                }
-                await new Promise(r => setTimeout(r, 2000));
-            }
-            document.getElementById("bulkTopics").value = "";
-        }
+  const pushLog = (line) => {
+    setProcessLog((prev) => [...prev.slice(-6), line]);
+  };
 
-        // ---- Random Learn (Wikipedia random article) ----
-        async function randomLearn() {
-            if (!isEmbedderReady) return alert("Wait for embedder.");
-            try {
-                const resp = await fetch("https://en.wikipedia.org/api/rest_v1/page/random/summary");
-                const data = await resp.json();
-                const title = data.title;
-                const extract = data.extract;
-                appendMessage("System", `🎲 Random Wikipedia: "${title}"`);
-                // Embed the extract
-                const emb = await getEmbedding(extract);
-                addMemoryItem(`[Wiki] ${title}: ${extract}`, emb);
-                appendMessage("System", `✅ Embedded summary of "${title}".`);
-            } catch(e) {
-                appendMessage("System", "❌ Random learn failed.");
-            }
-        }
+  const handleSaveKey = async () => {
+    if (!keyInput.trim()) return;
+    await saveApiKey(keyInput.trim());
+    setApiKey(keyInput.trim());
+    setShowKeyModal(false);
+    setKeyInput("");
+  };
 
-        // ---- Button Bindings ----
-        window.sendMessage = sendMessage;
-        window.clearChat = clearChat;
-        window.clearMemory = clearMemory;
-        window.bulkLearn = bulkLearn;
-        window.randomLearn = randomLearn;
-        window.processCuriosityQueue = processCuriosityQueue;
+  const clearMemory = async () => {
+    setMessages([]);
+    await saveHistory([]);
+  };
 
-        // ---- Startup ----
-        window.addEventListener("DOMContentLoaded", () => {
-            init();
-            document.getElementById("userInput").addEventListener("keypress", e => {
-                if (e.key === "Enter") sendMessage();
-            });
-            document.getElementById("bulkTopics").addEventListener("keypress", e => {
-                if (e.key === "Enter") bulkLearn();
-            });
-            updateQueueCount();
+  const sendMessage = useCallback(async () => {
+    const text = input.trim();
+    if (!text || loading) return;
+    if (!apiKey) {
+      setShowKeyModal(true);
+      return;
+    }
+
+    const userMsg = { role: "user", content: text, ts: Date.now() };
+    const newMessages = [...messages, userMsg];
+    setMessages(newMessages);
+    setInput("");
+    setLoading(true);
+    setProcessLog([]);
+
+    try {
+      pushLog("[wikipedia] checking relevance...");
+      const wiki = await fetchWikipedia(text);
+      if (wiki) {
+        pushLog(`[wikipedia] found: ${wiki.title}`);
+      } else {
+        pushLog("[wikipedia] no direct match");
+      }
+
+      const systemPrompt = `You are NeuralPath, a helpful AI assistant. Respond in the same language register the user uses (Hinglish, Hindi, or English) matching their style. Be direct and useful.
+
+CODE OUTPUT RULES (critical):
+- Whenever you write any code — HTML, CSS, JS, Python, anything — always wrap it in a fenced code block with the language name, like \`\`\`html ... \`\`\` or \`\`\`python ... \`\`\`. Never write code inline in plain prose.
+- If the user asks you to "build a website" or "build a page", give one single complete, self-contained \`\`\`html block with all CSS and JS inside it (inline <style> and <script>), so it can run standalone in a browser. Don't split it into separate files or separate code blocks unless asked.
+- Keep a short prose sentence before the code block explaining what it does, and a short sentence after if there's anything the user should know (e.g. how to use it). Don't repeat the whole code in prose.
+
+You have an execute_js tool: a real JavaScript sandbox that actually runs in the user's browser. Use it for any math, calculation, data processing, simulation, or when the user wants a chart/graph. Use console.log() to print results inside the code. For charts, after computing the data, console.log a JSON object of this exact shape so it can be rendered: {"chart": {"type": "bar"|"line", "title": "...", "labels": [...], "values": [...]}}.
+If execute_js returns an error, read the error message and immediately try again with corrected code — don't just report the error to the user, fix it yourself unless you try 3 times and still fail, in which case explain what's blocking it.
+
+You have a generate_image tool. Use it whenever the user asks for an image, photo, illustration, artwork, logo, or any visual to be created (not for real photos of real people/places — for those, suggest a web image search instead). Write a clear, descriptive prompt in English for best results even if the user asked in Hindi/Hinglish.
+
+If Wikipedia context is provided below, use it to ground factual answers, but verify/supplement with your own knowledge and web search.
+
+${wiki ? `WIKIPEDIA CONTEXT (title: ${wiki.title}):\n${wiki.extract}` : ""}`;
+
+      let apiMessages = newMessages
+        .slice(-12)
+        .map((m) => ({ role: m.role, content: m.content }));
+
+      const tools = [
+        { type: "web_search_20250305", name: "web_search" },
+        {
+          name: "execute_js",
+          description:
+            "Execute JavaScript code in a sandbox and return console.log output and the return value. Use for math, data processing, simulations, or generating chart data.",
+          input_schema: {
+            type: "object",
+            properties: {
+              code: { type: "string", description: "JavaScript code to run." },
+            },
+            required: ["code"],
+          },
+        },
+        {
+          name: "generate_image",
+          description:
+            "Generate an image from a text prompt. Returns a URL to the generated image.",
+          input_schema: {
+            type: "object",
+            properties: {
+              prompt: {
+                type: "string",
+                description: "Descriptive English prompt for the image to generate.",
+              },
+            },
+            required: ["prompt"],
+          },
+        },
+      ];
+
+      let usedSearch = false;
+      let usedCode = false;
+      let usedImage = false;
+      let chartData = null;
+      let imageData = null;
+      let finalTextParts = [];
+      let loopGuard = 0;
+
+      while (loopGuard < 8) {
+        loopGuard++;
+        pushLog(loopGuard === 1 ? "[claude] connecting to model..." : "[claude] continuing...");
+
+        const response = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": apiKey,
+            "anthropic-version": "2023-06-01",
+          },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-6",
+            max_tokens: 2000,
+            system: systemPrompt,
+            messages: apiMessages,
+            tools,
+          }),
         });
-    </script>
-</body>
-</html>
+
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`API error ${response.status}: ${errText.slice(0, 200)}`);
+        }
+
+        const data = await response.json();
+        const content = data.content || [];
+
+        const textBlocks = content.filter((b) => b.type === "text");
+        finalTextParts = textBlocks.map((b) => b.text);
+
+        const serverToolUse = content.find(
+          (b) => b.type === "server_tool_use" && b.name === "web_search"
+        );
+        if (serverToolUse) {
+          usedSearch = true;
+          pushLog("[web_search] query executed");
+        }
+
+        const jsCall = content.find(
+          (b) => b.type === "tool_use" && b.name === "execute_js"
+        );
+        const imgCall = content.find(
+          (b) => b.type === "tool_use" && b.name === "generate_image"
+        );
+
+        if (jsCall) {
+          usedCode = true;
+          pushLog("[execute_js] running code...");
+          const codeStr = jsCall.input?.code || "";
+          const result = runSandboxedCode(codeStr);
+
+          if (result.ok) {
+            pushLog("[execute_js] success");
+            for (const line of result.logs) {
+              const parsed = tryExtractChart(line);
+              if (parsed) chartData = parsed;
+            }
+          } else {
+            pushLog(`[execute_js] error — asking model to self-fix`);
+          }
+
+          apiMessages = [
+            ...apiMessages,
+            { role: "assistant", content },
+            {
+              role: "user",
+              content: [
+                {
+                  type: "tool_result",
+                  tool_use_id: jsCall.id,
+                  content: result.ok
+                    ? `Output:\n${result.logs.join("\n") || "(no console output)"}\n${
+                        result.result ? `Return value: ${result.result}` : ""
+                      }`
+                    : `Error: ${result.error}\n\nFix the code and call execute_js again with corrected code. Do not just explain the error.`,
+                  is_error: !result.ok,
+                },
+              ],
+            },
+          ];
+          continue;
+        }
+
+        if (imgCall) {
+          usedImage = true;
+          const prompt = imgCall.input?.prompt || text;
+          pushLog(`[generate_image] "${prompt.slice(0, 40)}..."`);
+          const url = buildImageUrl(prompt);
+          imageData = { prompt, url };
+
+          apiMessages = [
+            ...apiMessages,
+            { role: "assistant", content },
+            {
+              role: "user",
+              content: [
+                {
+                  type: "tool_result",
+                  tool_use_id: imgCall.id,
+                  content: `Image generated successfully and will be shown to the user automatically. Just confirm briefly in your own words — don't repeat the URL.`,
+                },
+              ],
+            },
+          ];
+          continue;
+        }
+
+        pushLog("[claude] response ready");
+        break;
+      }
+
+      const replyText = finalTextParts.join("\n").trim() || "(no text response)";
+
+      const assistantMsg = {
+        role: "assistant",
+        content: replyText,
+        ts: Date.now(),
+        usedWiki: !!wiki,
+        usedSearch,
+        usedCode,
+        usedImage,
+        chart: chartData,
+        image: imageData,
+      };
+      setMessages((prev) => [...prev, assistantMsg]);
+    } catch (err) {
+      pushLog(`[error] ${err.message}`);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: `Connection error: ${err.message}\n\nCheck your API key or network, then try again.`,
+          ts: Date.now(),
+          isError: true,
+        },
+      ]);
+    } finally {
+      setLoading(false);
+      setTimeout(() => setProcessLog([]), 2500);
+    }
+  }, [input, loading, apiKey, messages]);
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  return (
+    <div style={styles.app}>
+      <style>{globalStyles}</style>
+
+      {/* Status Bar */}
+      <div style={styles.statusBar}>
+        <div style={styles.statusLeft}>
+          <span style={styles.dot(apiKey ? "#00FF9C" : "#FF6B4A")} />
+          <span style={styles.statusText}>
+            NEURALPATH // {apiKey ? "LINKED" : "NO KEY"}
+          </span>
+        </div>
+        <div style={styles.statusRight}>
+          <button style={styles.iconBtn} onClick={() => setShowKeyModal(true)}>
+            KEY
+          </button>
+          <button style={styles.iconBtn} onClick={clearMemory}>
+            WIPE
+          </button>
+        </div>
+      </div>
+
+      {/* Chat area */}
+      <div style={styles.chatArea} ref={scrollRef}>
+        {messages.length === 0 && (
+          <div style={styles.emptyState}>
+            <div style={styles.emptyGlyph}>◈</div>
+            <div style={styles.emptyTitle}>Memory empty.</div>
+            <div style={styles.emptySub}>
+              Kuch bhi pucho — web search aur Wikipedia se grounded jawab milega.
+              Sab kuch yahin save rahega, refresh ke baad bhi.
+            </div>
+          </div>
+        )}
+
+        {messages.map((m, i) => (
+          <div
+            key={i}
+            style={m.role === "user" ? styles.userRow : styles.aiRow}
+          >
+            <div
+              style={
+                m.role === "user"
+                  ? styles.userBubble
+                  : m.isError
+                  ? styles.errorBubble
+                  : styles.aiBubble
+              }
+            >
+              <div style={styles.bubbleLabel}>
+                {m.role === "user" ? "YOU" : "NEURALPATH"}
+                {m.usedWiki && <span style={styles.tag}>WIKI</span>}
+                {m.usedSearch && <span style={styles.tag}>WEB</span>}
+                {m.usedCode && <span style={styles.tag}>CODE</span>}
+                {m.usedImage && <span style={styles.tag}>IMG</span>}
+              </div>
+              {m.role === "user" ? (
+                <div style={styles.bubbleText}>{m.content}</div>
+              ) : (
+                <MessageContent text={m.content} />
+              )}
+              {m.chart && <ChartBlock chart={m.chart} />}
+              {m.image && <ImageBlock prompt={m.image.prompt} url={m.image.url} />}
+            </div>
+          </div>
+        ))}
+
+        {loading && (
+          <div style={styles.aiRow}>
+            <div style={styles.aiBubble}>
+              <div style={styles.bubbleLabel}>NEURALPATH</div>
+              <div style={styles.terminalLog}>
+                {processLog.map((line, idx) => (
+                  <div key={idx} style={styles.logLine}>
+                    {line}
+                  </div>
+                ))}
+                <div style={styles.cursorBlink}>▋</div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Input bar */}
+      <div style={styles.inputBar}>
+        <textarea
+          style={styles.textarea}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Apna sawaal type karo..."
+          rows={1}
+        />
+        <button
+          style={styles.sendBtn}
+          onClick={sendMessage}
+          disabled={loading || !input.trim()}
+        >
+          {loading ? "···" : "→"}
+        </button>
+      </div>
+
+      {/* API Key Modal */}
+      {showKeyModal && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modal}>
+            <div style={styles.modalTitle}>Connect Claude API key</div>
+            <div style={styles.modalSub}>
+              Yeh key sirf tumhare browser mein local store hoti hai. Anthropic
+              console se free key milti hai: console.anthropic.com
+            </div>
+            <input
+              style={styles.modalInput}
+              type="password"
+              placeholder="sk-ant-..."
+              value={keyInput}
+              onChange={(e) => setKeyInput(e.target.value)}
+            />
+            <div style={styles.modalActions}>
+              {apiKey && (
+                <button
+                  style={styles.modalCancelBtn}
+                  onClick={() => setShowKeyModal(false)}
+                >
+                  Cancel
+                </button>
+              )}
+              <button style={styles.modalSaveBtn} onClick={handleSaveKey}>
+                Save & Connect
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ====== STYLES ======
+const globalStyles = `
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  textarea:focus, input:focus { outline: 2px solid #00FF9C; outline-offset: 2px; }
+  button:focus-visible { outline: 2px solid #00FF9C; outline-offset: 2px; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-thumb { background: #2A3A33; border-radius: 3px; }
+  @keyframes blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+`;
+
+const styles = {
+  app: {
+    display: "flex",
+    flexDirection: "column",
+    height: "100vh",
+    background: "#0A0E0D",
+    color: "#D7FFE8",
+    fontFamily: "'Inter', -apple-system, sans-serif",
+    overflow: "hidden",
+  },
+  statusBar: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "10px 16px",
+    borderBottom: "1px solid #1A2420",
+    background: "#0D1310",
+    flexShrink: 0,
+  },
+  statusLeft: { display: "flex", alignItems: "center", gap: 8 },
+  dot: (color) => ({
+    width: 8,
+    height: 8,
+    borderRadius: "50%",
+    background: color,
+    boxShadow: `0 0 8px ${color}`,
+    display: "inline-block",
+  }),
+  statusText: {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 11,
+    letterSpacing: "0.05em",
+    color: "#6B8577",
+  },
+  statusRight: { display: "flex", gap: 6 },
+  iconBtn: {
+    background: "transparent",
+    border: "1px solid #2A3A33",
+    color: "#6B8577",
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 10,
+    padding: "4px 10px",
+    borderRadius: 4,
+    cursor: "pointer",
+    letterSpacing: "0.05em",
+  },
+  chatArea: {
+    flex: 1,
+    overflowY: "auto",
+    padding: "20px 16px",
+    display: "flex",
+    flexDirection: "column",
+    gap: 14,
+  },
+  emptyState: {
+    margin: "auto",
+    textAlign: "center",
+    maxWidth: 320,
+    color: "#4A5C52",
+  },
+  emptyGlyph: { fontSize: 32, color: "#00FF9C", marginBottom: 12 },
+  emptyTitle: {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 14,
+    color: "#6B8577",
+    marginBottom: 8,
+  },
+  emptySub: { fontSize: 13, lineHeight: 1.6 },
+  userRow: { display: "flex", justifyContent: "flex-end" },
+  aiRow: { display: "flex", justifyContent: "flex-start" },
+  userBubble: {
+    maxWidth: "82%",
+    background: "#16241C",
+    border: "1px solid #234032",
+    borderRadius: "12px 12px 2px 12px",
+    padding: "10px 14px",
+  },
+  aiBubble: {
+    maxWidth: "82%",
+    background: "#131715",
+    border: "1px solid #1A2420",
+    borderRadius: "12px 12px 12px 2px",
+    padding: "10px 14px",
+  },
+  errorBubble: {
+    maxWidth: "82%",
+    background: "#1F1412",
+    border: "1px solid #4A2A20",
+    borderRadius: "12px 12px 12px 2px",
+    padding: "10px 14px",
+  },
+  bubbleLabel: {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 10,
+    color: "#6B8577",
+    marginBottom: 5,
+    letterSpacing: "0.05em",
+    display: "flex",
+    gap: 6,
+    alignItems: "center",
+  },
+  tag: {
+    background: "#1A2420",
+    color: "#00FF9C",
+    fontSize: 9,
+    padding: "1px 5px",
+    borderRadius: 3,
+  },
+  chartWrap: {
+    marginTop: 10,
+    padding: 10,
+    background: "#0D1310",
+    border: "1px solid #1A2420",
+    borderRadius: 8,
+  },
+  chartTitle: {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 11,
+    color: "#6B8577",
+    marginBottom: 6,
+    letterSpacing: "0.03em",
+  },
+  codeWrap: {
+    marginTop: 8,
+    marginBottom: 8,
+    background: "#0D1310",
+    border: "1px solid #1A2420",
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  codeTopComment: {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 10.5,
+    color: "#4A5C52",
+    padding: "8px 12px 0 12px",
+  },
+  codeBottomComment: {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 10.5,
+    color: "#4A5C52",
+    padding: "0 12px 8px 12px",
+  },
+  codeHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "6px 12px",
+  },
+  codeLang: {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 10.5,
+    color: "#00FF9C",
+    letterSpacing: "0.05em",
+    textTransform: "uppercase",
+  },
+  codeActions: { display: "flex", gap: 6 },
+  codeActionBtn: {
+    background: "#1A2420",
+    border: "1px solid #2A3A33",
+    color: "#D7FFE8",
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 10,
+    padding: "3px 9px",
+    borderRadius: 5,
+    cursor: "pointer",
+    letterSpacing: "0.03em",
+  },
+  codeBlock: {
+    margin: 0,
+    padding: "10px 12px",
+    overflowX: "auto",
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 12.5,
+    lineHeight: 1.6,
+    color: "#D7FFE8",
+    background: "#0A0E0D",
+  },
+  previewFrame: {
+    width: "100%",
+    height: 320,
+    border: "1px solid #1A2420",
+    borderTop: "2px solid #00FF9C",
+    background: "#fff",
+  },
+  imageWrap: {
+    marginTop: 8,
+    marginBottom: 8,
+    background: "#0D1310",
+    border: "1px solid #1A2420",
+    borderRadius: 8,
+    overflow: "hidden",
+    padding: "8px 12px 12px 12px",
+  },
+  imageLoading: {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 11.5,
+    color: "#00FF9C",
+    padding: "20px 0",
+    textAlign: "center",
+  },
+  generatedImage: {
+    width: "100%",
+    borderRadius: 6,
+    marginTop: 4,
+  },
+  imageOpenLink: {
+    display: "inline-block",
+    marginTop: 8,
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 10.5,
+    color: "#6B8577",
+    textDecoration: "none",
+  },
+  bubbleText: {
+    fontSize: 14.5,
+    lineHeight: 1.55,
+    whiteSpace: "pre-wrap",
+    color: "#D7FFE8",
+  },
+  terminalLog: {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 11.5,
+    color: "#00FF9C",
+    lineHeight: 1.8,
+  },
+  logLine: { opacity: 0.85 },
+  cursorBlink: {
+    animation: "blink 1s step-start infinite",
+    color: "#00FF9C",
+  },
+  inputBar: {
+    display: "flex",
+    gap: 8,
+    padding: "12px 16px",
+    borderTop: "1px solid #1A2420",
+    background: "#0D1310",
+    flexShrink: 0,
+  },
+  textarea: {
+    flex: 1,
+    background: "#131715",
+    border: "1px solid #2A3A33",
+    borderRadius: 10,
+    color: "#D7FFE8",
+    padding: "10px 12px",
+    fontSize: 14.5,
+    fontFamily: "'Inter', sans-serif",
+    resize: "none",
+    maxHeight: 100,
+  },
+  sendBtn: {
+    background: "#00FF9C",
+    color: "#0A0E0D",
+    border: "none",
+    borderRadius: 10,
+    width: 44,
+    fontSize: 18,
+    fontWeight: 700,
+    cursor: "pointer",
+    flexShrink: 0,
+  },
+  modalOverlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(0,0,0,0.7)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
+    zIndex: 100,
+  },
+  modal: {
+    background: "#131715",
+    border: "1px solid #2A3A33",
+    borderRadius: 14,
+    padding: 22,
+    maxWidth: 380,
+    width: "100%",
+  },
+  modalTitle: {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 15,
+    color: "#D7FFE8",
+    marginBottom: 8,
+  },
+  modalSub: {
+    fontSize: 12.5,
+    color: "#6B8577",
+    lineHeight: 1.6,
+    marginBottom: 16,
+  },
+  modalInput: {
+    width: "100%",
+    background: "#0A0E0D",
+    border: "1px solid #2A3A33",
+    borderRadius: 8,
+    color: "#D7FFE8",
+    padding: "10px 12px",
+    fontSize: 14,
+    marginBottom: 16,
+  },
+  modalActions: { display: "flex", justifyContent: "flex-end", gap: 8 },
+  modalCancelBtn: {
+    background: "transparent",
+    border: "1px solid #2A3A33",
+    color: "#6B8577",
+    borderRadius: 8,
+    padding: "9px 16px",
+    cursor: "pointer",
+    fontSize: 13,
+  },
+  modalSaveBtn: {
+    background: "#00FF9C",
+    color: "#0A0E0D",
+    border: "none",
+    borderRadius: 8,
+    padding: "9px 16px",
+    cursor: "pointer",
+    fontWeight: 600,
+    fontSize: 13,
+  },
+};
