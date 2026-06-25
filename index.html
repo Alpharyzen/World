@@ -3,258 +3,395 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🤖 Self-Hosted AI Bot (No Keys)</title>
+    <title>🤖 Self‑Learning AI Bot (No Key, Auto Curiosity)</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 700px; margin: 20px auto; padding: 10px; }
-        #chat { height: 350px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; background: #f5f5f5; margin-bottom: 10px; }
-        .msg { margin: 8px 0; }
-        .user { color: #0066cc; }
-        .bot { color: #2e7d32; }
-        .info { color: #555; font-size: 0.9em; }
-        button, input { font-size: 1rem; padding: 8px; margin: 3px; }
-        #model-status { background: #e8e8e8; padding: 6px; margin-bottom: 8px; border-radius: 4px; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 10px; }
+        #chat { height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 15px; background: #fafafa; margin-bottom: 12px; border-radius: 6px; }
+        .msg { margin: 10px 0; line-height: 1.5; }
+        .user { color: #1a73e8; }
+        .bot { color: #0d652d; }
+        .info { color: #5f6368; font-size: 0.85em; }
+        input, button { font-size: 0.9rem; padding: 8px 12px; margin: 4px; border-radius: 4px; border: 1px solid #ccc; }
+        button { background: #1a73e8; color: white; border: none; cursor: pointer; }
+        button:hover { background: #1557b0; }
+        .learn-panel { background: #f1f3f4; padding: 12px; border-radius: 8px; margin: 15px 0; }
+        #model-status { background: #e8f0fe; padding: 8px; margin: 8px 0; border-radius: 4px; font-size: 0.9em; }
+        .memory-badge { background: #e8eaed; padding: 2px 8px; border-radius: 12px; font-size: 0.8em; }
     </style>
 </head>
 <body>
-    <h2>🧠 Local AI Bot (Memory + Wikipedia Download)</h2>
-    <div id="model-status">Model load ho raha hai... (ye sirf pehli baar, ~800 MB)</div>
+    <h2>🧠 Self‑Learning AI — Curiosity, Bulk & Random Learn</h2>
+    <div id="model-status">⏳ Models load ho rahe hain…</div>
     <div id="chat"></div>
-    <input type="text" id="userInput" placeholder="Message likhiye..." style="width:70%;" />
-    <button onclick="sendMessage()">▶️ Bhejo</button>
-    <button onclick="clearChat()">🧹 Chat Clear</button>
-    <button onclick="clearMemory()">🗑️ Memory Clear</button>
-    <hr>
-    <h3>📥 Wikipedia se Memory Download</h3>
-    <input type="text" id="learnQuery" placeholder="Kya search karna hai?" style="width:60%;" />
-    <button onclick="learnFromWikipedia()">🔍 Download & Save</button>
-    <div id="memoryInfo" class="info"></div>
+    <div style="display:flex; gap:6px;">
+        <input type="text" id="userInput" placeholder="Kuch bhi poochhiye..." style="flex:1;" />
+        <button onclick="sendMessage()">▶️ Bhejo</button>
+    </div>
+    <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
+        <button onclick="clearChat()">🧹 Chat Clear</button>
+        <button onclick="clearMemory()">🗑️ Memory Clear</button>
+        <span class="memory-badge" id="memoryCount">Memory: 0 chunks</span>
+    </div>
+
+    <div class="learn-panel">
+        <strong>📚 Self‑Learning Controls:</strong><br>
+        <div style="display:flex; gap:6px; align-items:center; margin-top:6px;">
+            <input type="text" id="bulkTopics" placeholder="Topic1, Topic2, ..." style="flex:1;" />
+            <button onclick="bulkLearn()">⚡ Bulk Learn</button>
+        </div>
+        <div style="margin-top:6px;">
+            <button onclick="randomLearn()">🎲 Random Learn (Wikipedia)</button>
+            <button onclick="processCuriosityQueue()" title="Curiosity queue mein bache topics seekhein">🧪 Process Curiosity Queue</button>
+            <span id="queueCount" style="font-size:0.8em; margin-left:8px;"></span>
+        </div>
+        <div style="font-size:0.8em; margin-top:6px; color:#444;">
+            💡 Low‑confidence answers ke topics <strong>apne aap</strong> curiosity queue mein jaate hain aur 5 sec baad seekh liye jaate hain.
+        </div>
+    </div>
 
     <script type="module">
-        // ========== 1. WebLLM import (CDN se, no keys) ==========
         import * as webllm from "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.46/lib/index.min.js";
+        import { pipeline } from "https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2/dist/transformers.min.js";
 
-        // ========== 2. Model select karein (chhota, effective) ==========
-        const MODEL_ID = "TinyLlama-1.1B-Chat-v1.0-q4f16_1-MLC";  // alternative: "Llama-3.2-1B-Instruct-q4f16_1-MLC"
-        
-        // WebLLM engine banayein
+        // ========= CONFIG =========
+        const MODEL_ID = "Llama-3.2-1B-Instruct-q4f16_1-MLC";
+        let SEARX_INSTANCE = "https://searx.tiekoetter.com";
+        const BACKUP_INSTANCES = ["https://search.sapti.me", "https://searx.be"];
+        // =========================
+
+        let isModelReady = false, isEmbedderReady = false, embedder = null;
         const engine = new webllm.MLCEngine();
-        let isModelReady = false;
         const statusDiv = document.getElementById("model-status");
+        let memoryItems = [];
+        const MEMORY_KEY = "self_learning_memory";
+        const QUEUE_KEY = "curiosity_queue";  // topics to learn
 
-        async function initModel() {
+        // ---- Init ----
+        async function init() {
+            statusDiv.innerText = "⏳ Embedding model + LLM load ho rahe hain (~1.5 GB)...";
             try {
-                statusDiv.innerText = "⏳ Model load ho raha hai (ye sirf pehli baar)…";
+                embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+                isEmbedderReady = true;
+                statusDiv.innerText = "✅ Embedder ready. Loading language model...";
                 await engine.reload(MODEL_ID);
                 isModelReady = true;
-                statusDiv.innerText = "✅ Model ready! Ab aap baat kar sakte hain.";
-            } catch (err) {
-                statusDiv.innerText = "❌ Model load nahi hua. " + err.message;
-                console.error(err);
-            }
-        }
-        initModel();  // page load pe hi start
-
-        // ========== 3. Memory system (localStorage) ==========
-        const MEM_KEY = "local_ai_memory"; // array of {query, results, timestamp}
-
-        function getMemory() {
-            return JSON.parse(localStorage.getItem(MEM_KEY) || "[]");
-        }
-        function saveMemory(arr) {
-            localStorage.setItem(MEM_KEY, JSON.stringify(arr));
-            updateMemoryInfo();
-        }
-        function addMemoryItem(item) {
-            const mem = getMemory();
-            mem.push(item);
-            if (mem.length > 30) mem.shift(); // max 30 searches
-            saveMemory(mem);
-        }
-        function clearMemory() {
-            localStorage.removeItem(MEM_KEY);
-            updateMemoryInfo();
-            appendMessage("System", "🧹 Memory saaf kar di gayi.");
-        }
-        function updateMemoryInfo() {
-            const count = getMemory().length;
-            document.getElementById("memoryInfo").innerText = `Memory mein ${count} downloaded knowledge items hain.`;
-        }
-
-        // ========== 4. Wikipedia se free search (no API key) ==========
-        async function wikipediaSearch(query) {
-            const url = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&origin=*`;
-            const res = await fetch(url);
-            const data = await res.json();
-            if (!data.query || !data.query.search) return [];
-            return data.query.search.slice(0, 5).map(item => ({
-                title: item.title,
-                snippet: item.snippet.replace(/<\/?[^>]+(>|$)/g, ""), // strip HTML tags
-                link: `https://en.wikipedia.org/wiki/${encodeURIComponent(item.title)}`
-            }));
-        }
-
-        async function learnFromWikipedia() {
-            const query = document.getElementById("learnQuery").value.trim();
-            if (!query) return;
-            appendMessage("System", `🔍 Wikipedia se "${query}" search kar raha hoon…`);
-            try {
-                const results = await wikipediaSearch(query);
-                if (results.length === 0) {
-                    appendMessage("Bot", "Koi Wikipedia results nahi mile.");
-                    return;
-                }
-                // memory mein save karo
-                const memoryItem = {
-                    query,
-                    results,
-                    timestamp: new Date().toISOString()
-                };
-                addMemoryItem(memoryItem);
-                // summary dikhao
-                let summary = `✅ **Memory mein save ho gaya!** (${results.length} results)\n`;
-                results.forEach((r,i) => {
-                    summary += `${i+1}. **${r.title}** - ${r.snippet.substring(0,80)}...\n`;
-                });
-                appendMessage("Bot", summary);
-                document.getElementById("learnQuery").value = "";
-            } catch (e) {
-                appendMessage("Bot", "❌ Wikipedia search fail. Network check karein.");
+                statusDiv.innerText = "✅ AI ready. Self‑learning active.";
+            } catch(e) {
+                statusDiv.innerText = "❌ Error: " + e.message;
                 console.error(e);
             }
+            loadMemory();
+            updateMemoryCount();
+            renderChatHistory();
+            updateQueueCount();
+            // Process any pending curiosity queue on load
+            setTimeout(() => processCuriosityQueue(), 10000);
         }
 
-        // ========== 5. Memory retrieval (simple keyword match) ==========
-        function retrieveMemoryContext(userMessage) {
-            const memory = getMemory();
-            if (memory.length === 0) return "";
-            const words = userMessage.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-            let chunks = [];
-            memory.forEach(item => {
-                item.results.forEach(r => {
-                    const text = (r.title + " " + r.snippet).toLowerCase();
-                    let score = 0;
-                    words.forEach(w => { if (text.includes(w)) score++; });
-                    if (score > 0) chunks.push({score, text: `[Wikipedia] ${r.title}: ${r.snippet} (${r.link})`});
+        // ---- Memory (embeddings) ----
+        function saveMemory() {
+            const toSave = memoryItems.map(i => ({...i, embedding: Array.from(i.embedding)}));
+            localStorage.setItem(MEMORY_KEY, JSON.stringify(toSave));
+        }
+        function loadMemory() {
+            const raw = localStorage.getItem(MEMORY_KEY);
+            if (raw) {
+                try {
+                    const parsed = JSON.parse(raw);
+                    memoryItems = parsed.map(i => ({...i, embedding: new Float32Array(i.embedding)}));
+                } catch(e) { memoryItems = []; }
+            }
+        }
+        function addMemoryItem(text, embedding) {
+            memoryItems.push({ id: Date.now()+Math.random(), text, embedding, timestamp: Date.now() });
+            if (memoryItems.length > 500) memoryItems.shift();
+            saveMemory();
+            updateMemoryCount();
+        }
+        function clearMemory() {
+            memoryItems = [];
+            localStorage.removeItem(MEMORY_KEY);
+            updateMemoryCount();
+            appendMessage("System","🧹 Memory cleared.");
+        }
+        function updateMemoryCount() {
+            document.getElementById("memoryCount").innerText = `Memory: ${memoryItems.length} chunks`;
+        }
+
+        // ---- Cosine similarity & semantic search ----
+        function cosineSim(a,b) {
+            let dot=0, mA=0, mB=0;
+            for(let i=0;i<a.length;i++) { dot+=a[i]*b[i]; mA+=a[i]**2; mB+=b[i]**2; }
+            return (mA && mB) ? dot/(Math.sqrt(mA)*Math.sqrt(mB)) : 0;
+        }
+        async function searchMemory(queryEmb, topK=3, threshold=0.35) {
+            if(!memoryItems.length) return [];
+            const scored = memoryItems.map(item => ({item, score: cosineSim(queryEmb, item.embedding)}));
+            scored.sort((a,b)=>b.score-a.score);
+            return scored.filter(s=>s.score>=threshold).slice(0,topK);
+        }
+        async function getEmbedding(text) {
+            const out = await embedder(text, {pooling:'mean', normalize:true});
+            return out.data;
+        }
+
+        // ---- Web Search (SearXNG) ----
+        async function searchWeb(query) {
+            let res = await tryInstance(SEARX_INSTANCE, query);
+            if (res !== null) return res;
+            for (let inst of BACKUP_INSTANCES) {
+                res = await tryInstance(inst, query);
+                if (res !== null) {
+                    SEARX_INSTANCE = inst;
+                    return res;
+                }
+            }
+            return [];
+        }
+        async function tryInstance(baseUrl, query) {
+            try {
+                const url = `${baseUrl}/search?q=${encodeURIComponent(query)}&format=json&language=en`;
+                const resp = await fetch(url, { signal: AbortSignal.timeout(8000) });
+                if (!resp.ok) return null;
+                const data = await resp.json();
+                if (!data.results || !data.results.length) return null;
+                return data.results.slice(0, 5).map(r => ({
+                    title: r.title,
+                    snippet: r.content || r.snippet || "",
+                    link: r.url
+                }));
+            } catch(e) { return null; }
+        }
+
+        // ---- Curiosity Queue (topics to auto-learn) ----
+        function getCuriosityQueue() {
+            return JSON.parse(localStorage.getItem(QUEUE_KEY) || "[]");
+        }
+        function addToCuriosityQueue(topic) {
+            const queue = getCuriosityQueue();
+            if (!queue.includes(topic)) {
+                queue.push(topic);
+                localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+                updateQueueCount();
+            }
+        }
+        function removeFromCuriosityQueue(topic) {
+            let queue = getCuriosityQueue();
+            queue = queue.filter(t => t !== topic);
+            localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+            updateQueueCount();
+        }
+        function updateQueueCount() {
+            const q = getCuriosityQueue();
+            document.getElementById("queueCount").innerText = `Queue: ${q.length} topics`;
+        }
+        async function processCuriosityQueue() {
+            if (!isEmbedderReady) return;
+            const queue = getCuriosityQueue();
+            if (queue.length === 0) return;
+            appendMessage("System", `🧪 Curiosity queue se ${queue.length} topics seekh raha hoon...`);
+            for (const topic of queue) {
+                appendMessage("System", `🔍 Learning: "${topic}"`);
+                const results = await searchWeb(topic);
+                if (results.length > 0) {
+                    for (let r of results) {
+                        const text = `[Web] ${r.title}: ${r.snippet} (${r.link})`;
+                        const emb = await getEmbedding(text);
+                        addMemoryItem(text, emb);
+                    }
+                    appendMessage("System", `✅ "${topic}" ke liye ${results.length} snippets memory mein add.`);
+                } else {
+                    appendMessage("System", `❌ "${topic}" ke liye koi results nahi mile.`);
+                }
+                removeFromCuriosityQueue(topic);
+                // Thoda delay taaki rate‑limit na ho
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+            appendMessage("System", "📚 Curiosity queue processed.");
+        }
+
+        // ---- Core Answering (with auto curiosity trigger) ----
+        async function getAnswerForQuestion(userQuestion) {
+            const qEmb = await getEmbedding(userQuestion);
+            const relevant = await searchMemory(qEmb, 3, 0.35);
+            let memoryCtx = "";
+            if (relevant.length > 0) {
+                memoryCtx = "--- Relevant Memory ---\n" + relevant.map((s,i)=>`[Memory ${i+1}] ${s.item.text}`).join('\n\n');
+            }
+            const memoryConf = relevant.length ? relevant[0].score : 0;
+            let webCtx = "", webResults = null;
+            if (memoryConf < 0.4) {
+                appendMessage("System", "🌐 Confidence low, web search kar raha hoon...");
+                webResults = await searchWeb(userQuestion);
+                if (webResults && webResults.length) {
+                    webCtx = "--- Web Results ---\n" + webResults.map((r,i)=>`[Web ${i+1}] ${r.title}: ${r.snippet}`).join('\n');
+                } else {
+                    appendMessage("System", "⚠️ Web search fail, sirf memory se jawab.");
+                }
+            }
+
+            const systemPrompt = "You are a helpful assistant. Use context to answer accurately. Cite sources if possible. Answer in user's language (Hindi or English).";
+            const messages = [{ role: "system", content: systemPrompt }];
+            if (memoryCtx) messages.push({ role: "system", content: memoryCtx });
+            if (webCtx) messages.push({ role: "system", content: webCtx });
+            messages.push({ role: "user", content: userQuestion });
+
+            let fullReply = "";
+            const replyDiv = document.createElement("div");
+            replyDiv.className = "msg bot";
+            replyDiv.innerHTML = "<strong>Bot:</strong> <span></span>";
+            document.getElementById("chat").appendChild(replyDiv);
+            const span = replyDiv.querySelector("span");
+            try {
+                const stream = await engine.chat.completions.create({
+                    messages, temperature: 0.3, max_tokens: 500, stream: true
                 });
-            });
-            chunks.sort((a,b) => b.score - a.score);
-            const top = chunks.slice(0, 3).map(c => c.text).join("\n");
-            return top ? "--- Relevant Memory ---\n" + top + "\n----------------------" : "";
+                for await (const chunk of stream) {
+                    const c = chunk.choices[0]?.delta?.content || "";
+                    fullReply += c;
+                    span.innerText = fullReply;
+                    document.getElementById("chat").scrollTop = document.getElementById("chat").scrollHeight;
+                }
+            } catch(e) {
+                fullReply = "Error: " + e.message;
+                span.innerText = fullReply;
+            }
+
+            // Save answer & web snippets to memory
+            if (fullReply) {
+                const ansEmb = await getEmbedding(fullReply);
+                addMemoryItem(`Q: ${userQuestion}\nA: ${fullReply}`, ansEmb);
+            }
+            if (webResults) {
+                for (let r of webResults) {
+                    const txt = `[Web] ${r.title}: ${r.snippet} (${r.link})`;
+                    const emb = await getEmbedding(txt);
+                    addMemoryItem(txt, emb);
+                }
+                // Trigger curiosity: if we did a web search, add to queue for deeper background learn
+                addToCuriosityQueue(userQuestion);
+                appendMessage("System", "🧠 Is topic ko curiosity queue mein daal diya, jald seekh loonga.");
+            }
+
+            return fullReply;
         }
 
-        // ========== 6. Chat history (localStorage) ==========
-        const CHAT_KEY = "local_chat_history";
+        // ---- Chat History ----
+        const CHAT_KEY = "self_learn_chat";
         function getChatHistory() {
             return JSON.parse(localStorage.getItem(CHAT_KEY) || "[]");
         }
         function saveChatHistory(msgs) {
-            // sirf last 30 messages rakho
-            if (msgs.length > 30) msgs = msgs.slice(-30);
+            if (msgs.length > 100) msgs = msgs.slice(-100);
             localStorage.setItem(CHAT_KEY, JSON.stringify(msgs));
+        }
+        function renderChatHistory() {
+            const hist = getChatHistory();
+            hist.forEach(msg => appendMessage(msg.role==="user"?"You":"Bot", msg.content));
         }
         function clearChat() {
             localStorage.removeItem(CHAT_KEY);
             document.getElementById("chat").innerHTML = "";
         }
 
-        // ========== 7. UI helpers ==========
-        window.appendMessage = function(sender, text) {
+        // ---- UI ----
+        function appendMessage(sender, text) {
             const chatDiv = document.getElementById("chat");
             const div = document.createElement("div");
-            div.className = `msg ${sender === "You" ? "user" : sender === "Bot" ? "bot" : "info"}`;
-            div.innerHTML = `<strong>${sender}:</strong> ${text.replace(/\n/g, '<br>')}`;
+            div.className = `msg ${sender==="You"?"user":sender==="Bot"?"bot":"info"}`;
+            div.innerHTML = `<strong>${sender}:</strong> ${text.replace(/\n/g,'<br>')}`;
             chatDiv.appendChild(div);
             chatDiv.scrollTop = chatDiv.scrollHeight;
-        };
+        }
 
-        // ========== 8. Send message to AI (WebLLM) ==========
-        window.sendMessage = async function() {
-            if (!isModelReady) {
-                appendMessage("System", "Model abhi ready nahi hai. Thoda wait karein...");
+        // ---- Send Message ----
+        async function sendMessage() {
+            if (!isModelReady || !isEmbedderReady) {
+                appendMessage("System","⏳ Models abhi ready nahi.");
                 return;
             }
             const input = document.getElementById("userInput");
-            const userMsg = input.value.trim();
-            if (!userMsg) return;
-            appendMessage("You", userMsg);
+            const msg = input.value.trim();
+            if (!msg) return;
+            appendMessage("You", msg);
             input.value = "";
+            const hist = getChatHistory();
+            hist.push({ role: "user", content: msg });
+            saveChatHistory(hist);
 
-            // Chat history update
-            const chatHistory = getChatHistory();
-            chatHistory.push({ role: "user", content: userMsg });
+            await getAnswerForQuestion(msg);
 
-            // Build the messages array with memory context
-            const memoryCtx = retrieveMemoryContext(userMsg);
-            let systemPrompt = "You are a helpful, friendly assistant. Always try to answer in the user's language (Hindi or English). If provided with 'Relevant Memory', use that information to answer accurately and cite the source. If not, use your own knowledge.";
-            const messages = [
-                { role: "system", content: systemPrompt }
-            ];
-            if (memoryCtx) {
-                messages.push({ role: "system", content: memoryCtx });
+            // Update history with last bot reply
+            const lastBotSpan = document.querySelector("#chat .bot:last-of-type span");
+            if (lastBotSpan) {
+                hist.push({ role: "assistant", content: lastBotSpan.innerText });
+                saveChatHistory(hist);
             }
-            // last 6 messages from history
-            const recent = chatHistory.slice(-6);
-            messages.push(...recent);
+            // Background curiosity processing (after a delay)
+            setTimeout(() => processCuriosityQueue(), 5000);
+        }
 
-            try {
-                // Streaming response from WebLLM
-                const replyParts = [];
-                const completion = await engine.chat.completions.create({
-                    messages: messages,
-                    temperature: 0.7,
-                    max_tokens: 300,
-                    stream: true
-                });
-
-                // Create a placeholder bot message
-                const botDiv = document.createElement("div");
-                botDiv.className = "msg bot";
-                const chatDiv = document.getElementById("chat");
-                botDiv.innerHTML = "<strong>Bot:</strong> ";
-                chatDiv.appendChild(botDiv);
-                const botTextSpan = document.createElement("span");
-                botDiv.appendChild(botTextSpan);
-
-                // Process stream
-                for await (const chunk of completion) {
-                    const content = chunk.choices[0]?.delta?.content || "";
-                    replyParts.push(content);
-                    botTextSpan.innerText = replyParts.join("");
-                    chatDiv.scrollTop = chatDiv.scrollHeight;
+        // ---- Bulk Learn ----
+        async function bulkLearn() {
+            if (!isEmbedderReady) return alert("Wait for embedder.");
+            const raw = document.getElementById("bulkTopics").value;
+            const topics = raw.split(",").map(t => t.trim()).filter(Boolean);
+            if (!topics.length) return;
+            for (const topic of topics) {
+                appendMessage("System", `📚 Bulk learn: "${topic}"`);
+                const results = await searchWeb(topic);
+                if (results.length) {
+                    for (let r of results) {
+                        const txt = `[Web] ${r.title}: ${r.snippet} (${r.link})`;
+                        const emb = await getEmbedding(txt);
+                        addMemoryItem(txt, emb);
+                    }
+                    appendMessage("System", `✅ "${topic}" embedded.`);
+                } else {
+                    appendMessage("System", `❌ "${topic}" no results.`);
                 }
-
-                const fullReply = replyParts.join("");
-                // Save to history
-                chatHistory.push({ role: "assistant", content: fullReply });
-                saveChatHistory(chatHistory);
-            } catch (err) {
-                appendMessage("Bot", "❌ Error generating reply: " + err.message);
-                console.error(err);
+                await new Promise(r => setTimeout(r, 2000));
             }
-        };
+            document.getElementById("bulkTopics").value = "";
+        }
 
-        // ========== 9. Page load setup ==========
-        window.addEventListener("DOMContentLoaded", () => {
-            // Load existing chat
-            const history = getChatHistory();
-            history.forEach(msg => {
-                appendMessage(msg.role === "user" ? "You" : "Bot", msg.content);
-            });
-            updateMemoryInfo();
+        // ---- Random Learn (Wikipedia random article) ----
+        async function randomLearn() {
+            if (!isEmbedderReady) return alert("Wait for embedder.");
+            try {
+                const resp = await fetch("https://en.wikipedia.org/api/rest_v1/page/random/summary");
+                const data = await resp.json();
+                const title = data.title;
+                const extract = data.extract;
+                appendMessage("System", `🎲 Random Wikipedia: "${title}"`);
+                // Embed the extract
+                const emb = await getEmbedding(extract);
+                addMemoryItem(`[Wiki] ${title}: ${extract}`, emb);
+                appendMessage("System", `✅ Embedded summary of "${title}".`);
+            } catch(e) {
+                appendMessage("System", "❌ Random learn failed.");
+            }
+        }
 
-            // Enter key handling
-            document.getElementById("userInput").addEventListener("keypress", (e) => {
-                if (e.key === "Enter") sendMessage();
-            });
-            document.getElementById("learnQuery").addEventListener("keypress", (e) => {
-                if (e.key === "Enter") learnFromWikipedia();
-            });
-        });
-
-        // Global functions for buttons
+        // ---- Button Bindings ----
+        window.sendMessage = sendMessage;
         window.clearChat = clearChat;
         window.clearMemory = clearMemory;
-        window.learnFromWikipedia = learnFromWikipedia;
+        window.bulkLearn = bulkLearn;
+        window.randomLearn = randomLearn;
+        window.processCuriosityQueue = processCuriosityQueue;
+
+        // ---- Startup ----
+        window.addEventListener("DOMContentLoaded", () => {
+            init();
+            document.getElementById("userInput").addEventListener("keypress", e => {
+                if (e.key === "Enter") sendMessage();
+            });
+            document.getElementById("bulkTopics").addEventListener("keypress", e => {
+                if (e.key === "Enter") bulkLearn();
+            });
+            updateQueueCount();
+        });
     </script>
 </body>
 </html>
